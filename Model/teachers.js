@@ -15,23 +15,21 @@ const teacherSchema = new Schema({
     images: [imageSchema],
     firstName: {
     type: String,
-    required: true,
     },
     lastName:{
     type: String,
-    required: true,
     },
     position:{
     type: String,
-    required: true,
     },
     age:{
     type: Number,
-    required: true,
     },
     birthDate:{
+    type: Date,
+    },
+    phoneNumber:{
     type: String,
-    required: true,
     }
 });
 

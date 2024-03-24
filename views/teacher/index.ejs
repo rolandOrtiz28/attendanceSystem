@@ -1,0 +1,28 @@
+<% layout('/layouts/boilerplate') -%>
+<link rel="stylesheet" href="/stylesheet/teacher.css">
+
+<div class="container">
+    <% for (const teacher of teachers) { %>
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card">
+                    <div class="card-border-top"></div>
+                    <div class="img" style="background-image: url('<%= teacher.images.length ? teacher.images[0].url : '/images/placeholder.jpg' %>')"></div>
+                    <!-- Labels and Data -->
+                    <div class="data">
+                        <div class="label">Full Name:</div>
+                        <div class="data"><%= teacher.firstName %> <%= teacher.lastName %></div>
+                    </div>
+                    <div class="data">
+                        <div class="label">Position:</div>
+                        <div class="data"><%= teacher.position %></div>
+                    </div>
+                    
+                   
+                    <!-- End of Labels and Data -->
+                    
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>

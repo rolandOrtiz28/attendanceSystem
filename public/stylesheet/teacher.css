@@ -1,0 +1,79 @@
+.card {
+    position: relative; /* Add position relative for positioning ::before pseudo-element */
+    width: 190px;
+    height: 254px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 15px;
+    box-shadow: 1px 5px 60px 0px #100a886b;
+}
+
+.card::before {
+    content: ""; /* Required for pseudo-elements */
+    position: absolute; /* Position the pseudo-element */
+    top: 0;
+    left: 0;
+    width:100%;
+    height: 100%;
+    background-image: url('/images/logo.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.1; /* Adjust the opacity value (0.0 to 1.0) */
+    border-radius: 15px;
+}
+
+.card .card-border-top {
+    width: 60%;
+    height: 3%;
+    background: #fac506;
+    margin: auto;
+    border-radius: 0px 0px 15px 15px;
+}
+
+.card span {
+    position: relative;
+    z-index: 1;
+    font-weight: 600;
+    color: #800000;
+    text-align: center;
+    display: block;
+    padding-top: 10px;
+    font-size: 16px;
+}
+
+.card .data {
+    position: relative;
+    z-index: 1;
+    font-weight: 400;
+    color: #800000;
+    display: block;
+    text-align: center;
+    padding-top: 3px;
+    font-size: 12px;
+    margin: 0; /* Remove margin */
+}
+
+.card .img {
+    position: relative;
+    z-index: 1;
+    width: 90px;
+    height: 100px;
+    background-color: #fac506;
+    border-radius: 15px;
+    margin: auto;
+    margin-top: 25px;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Positioning labels and data at the bottom */
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.label {
+    font-size: 10px; /* Adjust font size as needed */
+    text-align: center;
+}
