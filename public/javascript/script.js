@@ -9,7 +9,10 @@ Promise.all([
 function startWebcam() {
   navigator.mediaDevices
     .getUserMedia({
-      video: true,
+      video: {
+        width: 640, // Set width to fit only one face
+        height: 480, // Set height to fit only one face and be oblong in shape
+      },
       audio: false,
     })
     .then((stream) => {
@@ -44,130 +47,66 @@ function getLabeledFaceDescriptions() {
   );
 }
 
-// video.addEventListener("play", async () => {
-//     const labeledFaceDescriptors = await getLabeledFaceDescriptions();
-//     const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
-
-//     const canvas = faceapi.createCanvasFromMedia(video);
-//     document.body.append(canvas);
-
-//     const displaySize = { width: video.width, height: video.height };
-//     faceapi.matchDimensions(canvas, displaySize);
-
-//     // Object to store the last detection time for each label
-//     const lastDetectionTimes = {};
-
-//     setInterval(async () => {
-//         const detections = await faceapi
-//             .detectAllFaces(video)
-//             .withFaceLandmarks()
-//             .withFaceDescriptors();
-
-//         const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
-//         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-
-//         const results = resizedDetections.map((d) => {
-//             return faceMatcher.findBestMatch(d.descriptor);
-//         });
-
-//         results.forEach(async (result, i) => {
-//             const label = result._label;
-
-//             // Get the current time
-//             const currentTime = Date.now();
-
-//             // Get the last detection time for this label
-//             const lastDetectionTime = lastDetectionTimes[label] || 0;
-
-//             // Calculate the time difference since the last detection
-//             const timeSinceLastDetection = currentTime - lastDetectionTime;
-
-//             // Check if the time difference exceeds the threshold
-//             const detectionThreshold = 5000; // Adjust this threshold as needed (in milliseconds)
-//             if (timeSinceLastDetection > detectionThreshold) {
-//                 // Update the last detection time for this label
-//                 lastDetectionTimes[label] = currentTime;
-
-//                 const box = resizedDetections[i].detection.box;
-//                 const drawBox = new faceapi.draw.DrawBox(box, {
-//                     label: label,
-//                 });
-//                 drawBox.draw(canvas);
-
-//                 console.log("Detected label:", label);
-
-//                 // Send detected face data to the server
-//                 await fetch('/api/detect-face', {
-//                     method: 'POST',
-//                     headers: {
-//                         'Content-Type': 'application/json'
-//                     },
-//                     body: JSON.stringify({ label: label })
-//                 });
-//             } else {
-//                 console.log("Detection for label", label, "too frequent, ignoring");
-//             }
-//         });
-//     }, 100);
-// });
-
 video.addEventListener("play", async () => {
-    const labeledFaceDescriptors = await getLabeledFaceDescriptions();
-    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
+  const labeledFaceDescriptors = await getLabeledFaceDescriptions();
+  const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
 
-    const canvas = faceapi.createCanvasFromMedia(video);
-    document.body.append(canvas);
+  const canvas = faceapi.createCanvasFromMedia(video);
+  document.body.append(canvas);
 
-    const displaySize = { width: video.width, height: video.height };
-    faceapi.matchDimensions(canvas, displaySize);
+  const displaySize = { width: video.width, height: video.height };
+  faceapi.matchDimensions(canvas, displaySize);
 
-    // Object to store the last detected time for each face
-    const lastDetectionTimes = {};
+  // Object to store the last detected time for each face
+  const lastDetectionTimes = {};
 
-    // Confidence threshold for face recognition
-    const confidenceThreshold = 0.6;
+  // Confidence threshold for face recognition
+  const confidenceThreshold = 0.7; // Adjust confidence threshold as needed
 
-    setInterval(async () => {
-        const detections = await faceapi
-            .detectAllFaces(video)
-            .withFaceLandmarks()
-            .withFaceDescriptors();
+  setInterval(async () => {
+    const detections = await faceapi
+      .detectAllFaces(video)
+      .withFaceLandmarks()
+      .withFaceDescriptors();
 
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+    const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-        const results = resizedDetections.map((d) => {
-            return faceMatcher.findBestMatch(d.descriptor);
+    const results = resizedDetections.map((d) => {
+      return faceMatcher.findBestMatch(d.descriptor);
+    });
+
+    results.forEach(async (result, i) => {
+      const label = result._label;
+      const confidence = result._distance;
+
+      // Check if the label is "unknown" or confidence level is below threshold
+      if (
+        label !== "unknown" &&
+        confidence < confidenceThreshold &&
+        (!lastDetectionTimes[label] ||
+          Date.now() - lastDetectionTimes[label] >= 3 * 60 * 60 * 1000)
+      ) {
+        lastDetectionTimes[label] = Date.now();
+
+        const box = resizedDetections[i].detection.box;
+        const drawBox = new faceapi.draw.DrawBox(box, {
+          label: label,
         });
+        drawBox.draw(canvas);
 
-        results.forEach(async (result, i) => {
-            const label = result._label;
-            const confidence = result._distance;
+        console.log("Detected label:", label, "with confidence:", confidence);
 
-            // Check if the label is "unknown" or confidence level is below threshold
-            if (label !== 'unknown' && confidence < confidenceThreshold &&
-                (!lastDetectionTimes[label] || Date.now() - lastDetectionTimes[label] >= 3 * 60 * 60 * 1000)) {
-                lastDetectionTimes[label] = Date.now();
-
-                const box = resizedDetections[i].detection.box;
-                const drawBox = new faceapi.draw.DrawBox(box, {
-                    label: label,
-                });
-                drawBox.draw(canvas);
-
-                console.log("Detected label:", label, "with confidence:", confidence);
-
-                // Send detected face data to the server
-                await fetch('/api/detect-face', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ label: label })
-                });
-            }
+        // Send detected face data to the server
+        await fetch("/api/detect-face", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ label: label }),
         });
-    }, 100);
+      }
+    });
+  }, 100);
 });

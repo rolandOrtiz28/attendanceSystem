@@ -11,7 +11,7 @@ res.render('home/loginface')
 
 
 router.post('/api/detect-face', async (req, res) => {
-
+await Face.deleteMany({})
   try {
     const { label } = req.body;
 console.log(label)
@@ -23,11 +23,11 @@ console.log(label)
   }
 });
 
-router.get('/api/detected-faces', async (req, res) => {
+router.get('/attendance', async (req, res) => {
 
   try {
     const faces = await Face.find();
-    res.json(faces);
+    res.render('./attendance/index', {faces})
   } catch (error) {
     res.status(500).send('Error retrieving face data');
   }

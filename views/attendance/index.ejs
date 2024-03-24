@@ -1,0 +1,32 @@
+<% layout('/layouts/boilerplate') -%>
+<table class="table align-middle mb-0 bg-white">
+    <thead class="bg-light">
+      <tr>
+        <th>Name</th>
+        <th>Time In</th>
+        <th>Time Out</th>
+        
+        
+      </tr>
+    </thead>
+    <tbody>
+        <% for (const face of faces) { %>
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="ms-3">
+              <p class="fw-bold mb-1"> <%= face.label %></p>
+              
+            </div>
+          </div>
+        </td>
+        <td>
+          <p class="fw-normal mb-1"><%= new Date(face.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></p>
+          
+        </td>
+        
+      
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
