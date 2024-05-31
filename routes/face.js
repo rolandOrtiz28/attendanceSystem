@@ -42,7 +42,7 @@ const detectedFaces = new Set();
 
 // Define route handler for face detection
 router.post('/api/detect-face', async (req, res) => {
-await Face.deleteMany({})
+
   try {
     const { label } = req.body;
     console.log('Received face detection:', label);
