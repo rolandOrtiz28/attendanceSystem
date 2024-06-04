@@ -1,9 +1,14 @@
 const video = document.getElementById("video");
-let faceMatcher; // Store the faceMatcher globally
+const canvas = document.getElementById("overlay");
+const attendanceContainer = document.getElementById("attendance-container");
+let faceMatcher;
 let loader = document.getElementById("loader");
-const recognizedFaces = new Set(); // Store recognized faces
+let detectedFace = null;
+let lastRecognitionTime = 0;
+const minConfidence = 0.6;
+const recognitionCooldown = 3000;
 
-const minConfidence = 0.6; // Define minConfidence here
+const socket = io();
 
 Promise.all([
   faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
@@ -14,10 +19,7 @@ Promise.all([
 function startWebcam() {
   navigator.mediaDevices
     .getUserMedia({
-      video: {
-        width: 640,
-        height: 480,
-      },
+      video: { width: 640, height: 480 },
       audio: false,
     })
     .then((stream) => {
@@ -34,7 +36,7 @@ async function getLabeledFaceDescriptions() {
   const labels = ["Roland Ortiz", "Jhea Dela Cruz", "Chean Bunleap", "Chhin Sokunkhenna", "Khaing Meying", "Phan Phanith", "Saoheng Sovannary"];
   const descriptions = [];
   for (const label of labels) {
-    const customerDescriptors = []; // Array to store descriptors for each customer
+    const customerDescriptors = [];
     for (let i = 1; i <= 2; i++) {
       const img = await faceapi.fetchImage(`./labels/${label}/${i}.png`);
       const detections = await faceapi
@@ -43,160 +45,139 @@ async function getLabeledFaceDescriptions() {
         .withFaceDescriptor();
       if (detections && detections.descriptor) {
         const descriptor = detections.descriptor;
-        // Convert descriptor to Float32Array
         const float32Descriptor = new Float32Array(descriptor);
         customerDescriptors.push(float32Descriptor);
       } else {
         console.log(`No face detected for label ${label} in image ${i}`);
       }
     }
-    // Push the descriptors array for the current customer
     descriptions.push(new faceapi.LabeledFaceDescriptors(label, customerDescriptors));
   }
   return descriptions;
 }
 
-// video.addEventListener("play", async () => {
-//   const labeledFaceDescriptors = await getLabeledFaceDescriptions();
-//   faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.9);
+document.getElementById('timeOutBtn').addEventListener('click', () => {
+  if (detectedFace) {
+    console.log('Time Out button clicked with detected face:', detectedFace.label);
+    saveFaceDetection(detectedFace.label, 'timeOut');
+  } else {
+    console.log('No face detected to time out.');
+  }
+});
 
-//   const canvas = faceapi.createCanvasFromMedia(video);
-//   document.body.append(canvas);
+document.getElementById('timeIn').addEventListener('click', () => {
+  if (detectedFace) {
+    console.log('Time In button clicked with detected face:', detectedFace.label);
+    saveFaceDetection(detectedFace.label, 'timeIn');
+  } else {
+    console.log('No face detected to time in.');
+  }
+});
 
-//   const displaySize = { width: video.width, height: video.height };
-//   faceapi.matchDimensions(canvas, displaySize);
+async function saveFaceDetection(label, action) {
+  try {
+    console.log(`Attempting to save face detection: ${label}, Action: ${action}`);
+    const response = await fetch('/api/detect-face', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, action }),
+    });
+    if (!response.ok) {
+      console.error('Failed to send face detection data to server:', response.statusText);
+    } else {
+      console.log(`Face ${label} ${action} saved successfully.`);
+    }
+  } catch (error) {
+    console.error('Error sending face detection data to server:', error);
+  }
+}
 
-//   setInterval(async () => {
-//     const detections = await faceapi
-//       .detectAllFaces(video)
-//       .withFaceLandmarks()
-//       .withFaceDescriptors();
-
-//     const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
-//     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-
-//     resizedDetections.forEach((detection, i) => {
-//       // Check if the detection confidence is above the threshold
-//       if (detection.detection.score >= minConfidence) {
-//         const descriptor = detection.descriptor;
-//         const box = detection.detection.box;
-//         const result = faceMatcher.findBestMatch(descriptor);
-//         const label = result.toString().replace(/\s+\(.*?\)/, '');
-
-//         // Check if this label has been recognized before
-//         if (!recognizedFaces.has(label)) {
-//           // If not, add it to recognizedFaces set
-//           recognizedFaces.add(label);
-
-//           // Send the detection to the server only if it's a known person
-//           if (label !== "unknown") {
-//             fetch('/api/detect-face', {
-//               method: 'POST',
-//               headers: {
-//                 'Content-Type': 'application/json'
-//               },
-//               body: JSON.stringify({ label, box })
-//             })
-//             .then(response => {
-//               if (!response.ok) {
-//                 console.error('Failed to send face detection data to server:', response.statusText);
-//               }
-//             })
-//             .catch(error => {
-//               console.error('Error sending face detection data to server:', error);
-//             });
-//           }
-//         }
-
-//         const drawBox = new faceapi.draw.DrawBox(box, { label: label });
-//         drawBox.draw(canvas);
-//       } else {
-//         // If confidence is below threshold, label as "unknown"
-//         const box = detection.detection.box;
-//         const label = "unknown";
-//         const drawBox = new faceapi.draw.DrawBox(box, { label: label });
-//         drawBox.draw(canvas);
-//       }
-//     });
-//   }, 100);
-// });
+function updateAttendanceTable(faces) {
+  const tableHTML = `
+    <table class="table align-middle mb-0 bg-white">
+      <thead class="bg-light">
+        <tr>
+          <th>Name</th>
+          <th>Time In</th>
+          <th>Time Out</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${faces.map(face => `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="ms-3">
+                  <p class="fw-bold mb-1">${face.label}</p>
+                </div>
+              </div>
+            </td>
+            <td>
+              ${face.timeIn ? `<p class="fw-normal mb-1">${new Date(face.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+            </td>
+            <td>
+              ${face.timeOut ? `<p class="fw-normal mb-1">${new Date(face.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+  attendanceContainer.innerHTML = tableHTML;
+}
 
 video.addEventListener("play", async () => {
   const labeledFaceDescriptors = await getLabeledFaceDescriptions();
   faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.9);
 
-  const canvas = faceapi.createCanvasFromMedia(video);
-  document.body.append(canvas);
-
   const displaySize = { width: video.width, height: video.height };
   faceapi.matchDimensions(canvas, displaySize);
-
-  let lastRecognitionTime = 0; // Variable to store the timestamp of the last recognition
 
   setInterval(async () => {
     const currentTime = Date.now();
     const timeSinceLastRecognition = currentTime - lastRecognitionTime;
 
-    // Wait for 3 seconds before allowing another recognition
-    if (timeSinceLastRecognition < 3000) {
+    if (timeSinceLastRecognition < recognitionCooldown) {
       return;
     }
 
-    const detections = await faceapi
-      .detectAllFaces(video)
-      .withFaceLandmarks()
-      .withFaceDescriptors();
-
+    const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
     const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-    resizedDetections.forEach((detection, i) => {
-      // Check if the detection confidence is above the threshold
+    resizedDetections.forEach((detection) => {
       if (detection.detection.score >= minConfidence) {
         const descriptor = detection.descriptor;
         const box = detection.detection.box;
         const result = faceMatcher.findBestMatch(descriptor);
         const label = result.toString().replace(/\s+\(.*?\)/, '');
 
-        // Check if this label has been recognized before
-        if (!recognizedFaces.has(label)) {
-          // If not, add it to recognizedFaces set
-          recognizedFaces.add(label);
-
-          // Send the detection to the server only if it's a known person
-          if (result.distance <= 0.5) { // Adjust this threshold as needed
-            fetch('/api/detect-face', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ label, box })
-            })
-            .then(response => {
-              if (!response.ok) {
-                console.error('Failed to send face detection data to server:', response.statusText);
-              }
-            })
-            .catch(error => {
-              console.error('Error sending face detection data to server:', error);
-            });
-
-            // Update the timestamp of the last recognition
-            lastRecognitionTime = Date.now();
-          }
+        if (result.distance <= 0.7) {
+          detectedFace = { label, box }; // Store the detected face
+          console.log(`Detected face: ${label}`);
+          lastRecognitionTime = Date.now();
+        } else {
+          console.log('Face detected but not recognized.');
         }
 
-        const drawBox = new faceapi.draw.DrawBox(box, { label: label });
-        drawBox.draw(canvas);
-      } else {
-        // If confidence is below threshold, label as "unknown"
-        const box = detection.detection.box;
-        const label = "unknown";
-        const drawBox = new faceapi.draw.DrawBox(box, { label: label });
+        const drawBox = new faceapi.draw.DrawBox(box, { label });
         drawBox.draw(canvas);
       }
     });
   }, 100);
 });
+
+socket.on('face-updated', ({ label, action, time }) => {
+  console.log(`Received update: ${label} ${action} at ${time}`);
+  fetch('/api/get-faces')
+    .then(response => response.json())
+    .then(faces => updateAttendanceTable(faces))
+    .catch(error => console.error('Error fetching face data:', error));
+});
+
+window.onload = () => {
+  fetch('/api/get-faces')
+    .then(response => response.json())
+    .then(faces => updateAttendanceTable(faces))
+    .catch(error => console.error('Error fetching face data:', error));
+};

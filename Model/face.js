@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-
-const faceSchema = new Schema({
+const faceSchema = new mongoose.Schema({
    label: String,
-}, { timestamps: true })
+   timeIn: Date,
+   timeOut: Date,
+}, { timestamps: true });
 
-
-module.exports = mongoose.model('Face', faceSchema);
+const Face = mongoose.model('Face', faceSchema);
+module.exports = Face;

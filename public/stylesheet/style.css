@@ -1,3 +1,29 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.video-container,
+.attendance-container {
+    flex: 1;
+    margin: 10px;
+}
+
+.video-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.button-container {
+    margin-top: 10px;
+}
+
+.table-container {
+    width: 100%;
+    max-width: 600px;
+}
+
 body {
     padding: 0;
     margin: 0;
@@ -6,6 +32,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
 
 canvas {
@@ -22,8 +49,8 @@ canvas {
     height: 40px;
     animation: spin 2s linear infinite;
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 46%;
+    left: 44%;
     transform: translate(-50%, -50%);
 }
 
@@ -37,11 +64,49 @@ canvas {
     }
 }
 
-/* Additional styling for the video element */
-#video {
-    width: 600px;
-    height: 450px;
-    border: 2px solid #ccc; /* Add a border */
-    border-radius: 20px; /* Add rounded corners */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+/* Styling for the video container and buttons */
+
+
+.button-container {
+    margin-top: 15px;
 }
+
+#video {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-container .btn {
+    margin: 5px;
+}
+
+
+/* new */
+
+
+
+.video-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+#video {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+

@@ -1,20 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition</title>
+<% layout('/layouts/boilerplate') -%>
     <link rel="stylesheet" href="/stylesheet/style.css">
-</head>
 
-<body>
     <%- include('../partials/flash') %>
-        <div id="loader" class="loader"></div>
-        <video id="video" width="600" height="450" autoplay></video>
+
+        <div class="container d-flex justify-content-center" style="border: 2px solid black;">
+            <div class="row w-100 p-3">
+                <div class="col-md-6">
+                    <div class="video-container">
+                        <video id="video" width="600" height="450" autoplay></video>
+                        <canvas id="overlay" width="600" height="450"></canvas>
+                        <div class="button-container">
+                            <button class="ms-3 btn btn-primary" id="timeIn">Time In</button>
+                            <button class="ms-3 btn btn-secondary" id="timeOutBtn">Time Out</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mt-3">
+                    <div id="attendance-container">
+                        <!-- Table will be inserted here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <script src="/javascript/face-api.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
         <script src="/javascript/script.js"></script>
-</body>
-
-</html>
