@@ -123,14 +123,14 @@ router.post('/api/detect-face', async (req, res) => {
 // });
 
 
-router.get('/api/get-faces', async (req, res) => {
-  try {
-    const faces = await Face.find();
-    res.json(faces);
-  } catch (error) {
-    res.status(500).send('Error retrieving face data');
-  }
-});
+// router.get('/api/get-faces', async (req, res) => {
+//   try {
+//     const faces = await Face.find();
+//     res.json(faces);
+//   } catch (error) {
+//     res.status(500).send('Error retrieving face data');
+//   }
+// });
 
 router.get('/attendance', async (req, res) => {
 
