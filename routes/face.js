@@ -133,14 +133,24 @@ router.post('/api/detect-face', async (req, res) => {
 // });
 
 router.get('/attendance', async (req, res) => {
-
   try {
-    const faces = await Face.find();
-    res.render('./attendance/index', {faces})
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to the start of the day
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1); // Set to the start of the next day
+
+    // Find faces with timeIn or timeOut within the current day
+    const faces = await Face.find({
+      $or: [
+        { timeIn: { $gte: today, $lt: tomorrow } },
+        { timeOut: { $gte: today, $lt: tomorrow } }
+      ]
+    });
+
+    res.render('./attendance/index', { faces, currentDate: today });
   } catch (error) {
     res.status(500).send('Error retrieving face data');
   }
 });
-
 
 module.exports = router

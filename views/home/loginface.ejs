@@ -1,21 +1,23 @@
 <% layout('/layouts/boilerplate') -%>
     <link rel="stylesheet" href="/stylesheet/style.css">
-
     <%- include('../partials/flash') %>
 
-        <div class="container d-flex justify-content-center" style="border: 2px solid black;">
+        <div class="container d-flex justify-content-center">
             <div class="row w-100 p-3">
                 <div class="col-md-6">
                     <div class="video-container">
                         <video id="video" width="600" height="450" autoplay></video>
                         <canvas id="overlay" width="600" height="450"></canvas>
                         <div class="button-container">
-                            <button class="ms-3 btn btn-primary" id="timeIn">Time In</button>
-                            <button class="ms-3 btn btn-secondary" id="timeOutBtn">Time Out</button>
+                            <button class="ms-3 bttn" id="timeIn">Time In</button>
+                            <button class="ms-3 bttn2" id="timeOutBtn">Time Out</button>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 mt-3">
+                    <div class="clock" id="clock-container">
+                        <p id="clock" class="fw-bold fs-4 text-center"></p>
+                    </div>
                     <div id="attendance-container">
                         <!-- Table will be inserted here dynamically -->
                     </div>

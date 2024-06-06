@@ -94,7 +94,7 @@ async function saveFaceDetection(label, action) {
 
 function updateAttendanceTable(faces) {
   const tableHTML = `
-    <table class="table align-middle mb-0 bg-white">
+    <table class="table align-middle mb-0 table-dark table-striped">
       <thead class="bg-light">
         <tr>
           <th>Name</th>
@@ -180,4 +180,17 @@ window.onload = () => {
     .then(response => response.json())
     .then(faces => updateAttendanceTable(faces))
     .catch(error => console.error('Error fetching face data:', error));
+
+  // Start the clock
+  startClock();
 };
+
+function startClock() {
+  const clockElement = document.getElementById('clock');
+  function updateClock() {
+    const now = new Date();
+    clockElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+}

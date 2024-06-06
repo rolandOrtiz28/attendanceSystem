@@ -3,4 +3,8 @@ body {
     height: 100vh;
     margin: 0;
     font-family: 'Della Respira', serif;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url("/images/CleanBG.png");
+        background-attachment: fixed;
+        background-size: cover;
+        background-position: center;
 }
