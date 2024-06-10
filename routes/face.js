@@ -62,75 +62,7 @@ router.post('/api/detect-face', async (req, res) => {
   }
 });
 
-// soon to be deleted
 
-
-// router.post('/api/detect-face', async (req, res) => {
-//   try {
-//     const { label, action } = req.body;
-//     console.log('Received face detection:', label, action);
-
-//     if (!['timeIn', 'timeOut'].includes(action)) {
-//       return res.status(400).send('Invalid action');
-//     }
-
-//     let faceRecord = await Face.findOne({ label });
-
-//     if (!faceRecord) {
-//       faceRecord = new Face({ label });
-//     }
-
-//     if (action === 'timeIn') {
-//       faceRecord.timeIn = new Date();
-//     } else if (action === 'timeOut') {
-//       faceRecord.timeOut = new Date();
-//     }
-
-//     await faceRecord.save();
-//     res.status(201).send(`Face ${action} recorded successfully`);
-//   } catch (error) {
-//     console.error('Error saving face data:', error);
-//     res.status(500).send('Error saving face data');
-//   }
-// });
-
-
-// const detectedFaces = new Set();
-
-// // Define route handler for face detection
-// router.post('/api/detect-face', async (req, res) => {
-
-//   try {
-//     const { label } = req.body;
-//     console.log('Received face detection:', label);
-
-//     // Check if this face has been detected before
-//     if (!detectedFaces.has(label)) {
-//       // Add the label to the set of detected faces
-//       detectedFaces.add(label);
-//       const newFace = new Face({ label });
-//       await newFace.save();
-
-//       res.status(201).send('Face detected and saved successfully');
-//     } else {
-//       console.log('Face already detected:', label);
-//       res.status(200).send('Face already detected');
-//     }
-//   } catch (error) {
-//     console.error('Error saving face data:', error);
-//     res.status(500).send('Error saving face data');
-//   }
-// });
-
-
-// router.get('/api/get-faces', async (req, res) => {
-//   try {
-//     const faces = await Face.find();
-//     res.json(faces);
-//   } catch (error) {
-//     res.status(500).send('Error retrieving face data');
-//   }
-// });
 
 router.get('/attendance', async (req, res) => {
   try {
