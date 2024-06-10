@@ -1,3 +1,4 @@
+const dotenv = require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -33,9 +34,11 @@ const DailyRecord = require('./Model/DailyRecord');
 // routes
 const faceRoute = require('./routes/face');
 const teacherRoute = require('./routes/teacher');
+const secret = process.env.SESSION_SECRET
+
 
 const sessionConfig = {
-    secret: 'facerecog',
+    secret,
     name: '_rolandOrtiz',
     resave: false,
     saveUninitialized: true,
