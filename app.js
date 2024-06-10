@@ -27,7 +27,7 @@ db.once('open', () => {
 });
 
 // models
-const Admin = require('./model/auth');
+const Admin = require('./Model/auth');
 const Face = require('./Model/face');
 const DailyRecord = require('./Model/DailyRecord');
 
