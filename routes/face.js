@@ -71,8 +71,6 @@ router.get('/attendance', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1); // Set to the start of the next day
 
-    console.log(`Fetching attendance for: ${today.toISOString()} to ${tomorrow.toISOString()}`);
-
     // Find faces with timeIn or timeOut within the current day
     const faces = await Face.find({
       $or: [
@@ -83,10 +81,8 @@ router.get('/attendance', async (req, res) => {
 
     res.render('./attendance/index', { faces, currentDate: today });
   } catch (error) {
-    console.error('Error retrieving face data:', error);
     res.status(500).send('Error retrieving face data');
   }
 });
-
 
 module.exports = router
