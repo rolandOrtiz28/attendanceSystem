@@ -48,9 +48,9 @@ router.post('/api/detect-face', async (req, res) => {
     }
 
     if (action === 'timeIn') {
-      faceRecord.timeIn = new Date();
+      faceRecord.timeIn = new Date(); // Stores in UTC
     } else if (action === 'timeOut') {
-      faceRecord.timeOut = new Date();
+      faceRecord.timeOut = new Date(); // Stores in UTC
     }
 
     await faceRecord.save();
