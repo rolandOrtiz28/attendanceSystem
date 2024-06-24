@@ -33,7 +33,7 @@ function startWebcam() {
 }
 
 async function getLabeledFaceDescriptions() {
-  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "Chean Bunleap", "Chhin Sokunkhenna", "Khaing Meying", "Phan Phanith", "Saoheng Sovannary"];
+  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy"];
   const descriptions = [];
   for (const label of labels) {
     const customerDescriptors = [];
@@ -93,6 +93,17 @@ async function saveFaceDetection(label, action) {
 }
 
 function updateAttendanceTable(faces) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const filteredFaces = faces.filter(face => {
+    const timeIn = face.timeIn ? new Date(face.timeIn) : null;
+    const timeOut = face.timeOut ? new Date(face.timeOut) : null;
+
+    // Check if either timeIn or timeOut is today
+    return (timeIn && timeIn >= today) || (timeOut && timeOut >= today);
+  });
+
   const tableHTML = `
     <table class="table align-middle mb-0 table-dark table-striped">
       <thead class="bg-light">
@@ -103,7 +114,7 @@ function updateAttendanceTable(faces) {
         </tr>
       </thead>
       <tbody>
-        ${faces.map(face => `
+        ${filteredFaces.map(face => `
           <tr>
             <td>
               <div class="d-flex align-items-center">
@@ -174,6 +185,7 @@ socket.on('face-updated', ({ label, action, time }) => {
     .then(faces => updateAttendanceTable(faces))
     .catch(error => console.error('Error fetching face data:', error));
 });
+
 
 window.onload = () => {
   fetch('/api/get-faces')

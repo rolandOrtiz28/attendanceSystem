@@ -81,8 +81,10 @@ router.get('/attendance', async (req, res) => {
 
     res.render('./attendance/index', { faces, currentDate: today });
   } catch (error) {
+    console.error('Error retrieving face data:', error);
     res.status(500).send('Error retrieving face data');
   }
 });
+
 
 module.exports = router
