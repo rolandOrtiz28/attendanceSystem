@@ -93,17 +93,6 @@ async function saveFaceDetection(label, action) {
 }
 
 function updateAttendanceTable(faces) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const filteredFaces = faces.filter(face => {
-    const timeIn = face.timeIn ? new Date(face.timeIn) : null;
-    const timeOut = face.timeOut ? new Date(face.timeOut) : null;
-
-    // Check if either timeIn or timeOut is today
-    return (timeIn && timeIn >= today) || (timeOut && timeOut >= today);
-  });
-
   const tableHTML = `
     <table class="table align-middle mb-0 table-dark table-striped">
       <thead class="bg-light">
@@ -114,7 +103,7 @@ function updateAttendanceTable(faces) {
         </tr>
       </thead>
       <tbody>
-        ${filteredFaces.map(face => `
+        ${faces.map(face => `
           <tr>
             <td>
               <div class="d-flex align-items-center">
@@ -185,7 +174,6 @@ socket.on('face-updated', ({ label, action, time }) => {
     .then(faces => updateAttendanceTable(faces))
     .catch(error => console.error('Error fetching face data:', error));
 });
-
 
 window.onload = () => {
   fetch('/api/get-faces')
