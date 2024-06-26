@@ -33,7 +33,7 @@ function startWebcam() {
 }
 
 async function getLabeledFaceDescriptions() {
-  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy"];
+  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy", "Ath Phyly", "Ath Sophaning", "Bouen Yuthakar", "Chen Nary", "Kong Pisey", "Melvin Dela Cruz", "Naim Bunna", "Ra Eiksreyka", "Sim Visal", "Sim Votey", "Sun Sophol", "Tes Kosal", "Yoeun Chamnab"];
   const descriptions = [];
   for (const label of labels) {
     const customerDescriptors = [];
@@ -93,32 +93,41 @@ async function saveFaceDetection(label, action) {
 }
 
 function updateAttendanceTable(faces) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const tableHTML = `
     <table class="table align-middle mb-0 table-dark table-striped">
       <thead class="bg-light">
         <tr>
           <th>Name</th>
+          <th>Class</th>
           <th>Time In</th>
           <th>Time Out</th>
         </tr>
       </thead>
       <tbody>
-        ${faces.map(face => `
-          <tr>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="ms-3">
-                  <p class="fw-bold mb-1">${face.label}</p>
+        ${faces.map(face => face.timeEntries
+    .filter(entry => new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
+    .map(entry => `
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="ms-3">
+                    <p class="fw-bold mb-1">${face.label}</p>
+                  </div>
                 </div>
-              </div>
-            </td>
-            <td>
-              ${face.timeIn ? `<p class="fw-normal mb-1">${new Date(face.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
-            </td>
-            <td>
-              ${face.timeOut ? `<p class="fw-normal mb-1">${new Date(face.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
-            </td>
-          </tr>`).join('')}
+              </td>
+              <td>
+                <p class="fw-normal mb-1">${entry.classLabel}</p>
+              </td>
+              <td>
+                ${entry.timeIn ? `<p class="fw-normal mb-1">${new Date(entry.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+              </td>
+              <td>
+                ${entry.timeOut ? `<p class="fw-normal mb-1">${new Date(entry.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+              </td>
+            </tr>`).join('')).join('')}
       </tbody>
     </table>
   `;
@@ -167,8 +176,8 @@ video.addEventListener("play", async () => {
   }, 100);
 });
 
-socket.on('face-updated', ({ label, action, time }) => {
-  console.log(`Received update: ${label} ${action} at ${time}`);
+socket.on('face-updated', ({ label, action, time, classLabel }) => {
+  console.log(`Received update: ${label} ${action} at ${time} for ${classLabel}`);
   fetch('/api/get-faces')
     .then(response => response.json())
     .then(faces => updateAttendanceTable(faces))
@@ -181,7 +190,6 @@ window.onload = () => {
     .then(faces => updateAttendanceTable(faces))
     .catch(error => console.error('Error fetching face data:', error));
 
-  // Start the clock
   startClock();
 };
 
