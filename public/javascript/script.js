@@ -25,7 +25,7 @@ function startWebcam() {
     .then((stream) => {
       video.srcObject = stream;
       video.play();
-      loader.style.display = "none";
+      if (loader) loader.style.display = "none";
     })
     .catch((error) => {
       console.error(error);
@@ -195,10 +195,12 @@ window.onload = () => {
 
 function startClock() {
   const clockElement = document.getElementById('clock');
-  function updateClock() {
-    const now = new Date();
-    clockElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (clockElement) {
+    function updateClock() {
+      const now = new Date();
+      clockElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
   }
-  updateClock();
-  setInterval(updateClock, 1000);
 }
