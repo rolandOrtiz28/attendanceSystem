@@ -76,11 +76,12 @@ document.getElementById('timeIn').addEventListener('click', () => {
 
 async function saveFaceDetection(label, action) {
   try {
-    console.log(`Attempting to save face detection: ${label}, Action: ${action}`);
+    const clientTime = new Date();
+    console.log(`Attempting to save face detection: ${label}, Action: ${action}, Client Time: ${clientTime}`);
     const response = await fetch('/api/detect-face', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label, action }),
+      body: JSON.stringify({ label, action, clientTime }),
     });
     if (!response.ok) {
       console.error('Failed to send face detection data to server:', response.statusText);
@@ -176,31 +177,25 @@ video.addEventListener("play", async () => {
   }, 100);
 });
 
-socket.on('face-updated', ({ label, action, time, classLabel }) => {
-  console.log(`Received update: ${label} ${action} at ${time} for ${classLabel}`);
-  fetch('/api/get-faces')
+socket.on("face-updated", ({ label, action, time, classLabel }) => {
+  console.log(`Received update from server: ${label} ${action} at ${time} for ${classLabel}`);
+  fetch("/api/get-faces")
     .then(response => response.json())
-    .then(faces => updateAttendanceTable(faces))
+    .then(data => updateAttendanceTable(data))
     .catch(error => console.error('Error fetching face data:', error));
 });
 
-window.onload = () => {
-  fetch('/api/get-faces')
-    .then(response => response.json())
-    .then(faces => updateAttendanceTable(faces))
-    .catch(error => console.error('Error fetching face data:', error));
-
-  startClock();
-};
-
-function startClock() {
-  const clockElement = document.getElementById('clock');
-  if (clockElement) {
-    function updateClock() {
-      const now = new Date();
-      clockElement.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-  }
+function updateClock() {
+  const now = new Date();
+  const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', options);
 }
+
+setInterval(updateClock, 1000);
+
+window.onload = function () {
+  fetch("/api/get-faces")
+    .then(response => response.json())
+    .then(data => updateAttendanceTable(data))
+    .catch(error => console.error('Error fetching face data:', error));
+};

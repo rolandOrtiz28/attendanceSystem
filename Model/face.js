@@ -10,7 +10,6 @@
 // module.exports = Face;
 
 const mongoose = require('mongoose');
-
 const timeEntrySchema = new mongoose.Schema({
    timeIn: Date,
    timeOut: Date,
