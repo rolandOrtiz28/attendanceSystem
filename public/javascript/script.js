@@ -19,7 +19,7 @@ Promise.all([
 function startWebcam() {
   navigator.mediaDevices
     .getUserMedia({
-      video: { width: 320, height: 240 }, // Reduced resolution
+      video: { width: 640, height: 480 },
       audio: false,
     })
     .then((stream) => {
@@ -38,15 +38,17 @@ async function getLabeledFaceDescriptions() {
   for (const label of labels) {
     const customerDescriptors = [];
     for (let i = 1; i <= 2; i++) {
-      const img = await faceapi.fetchImage(`./labels/${label}/${i}.png`);
+      const img = await faceapi.fetchImage(./labels/${ label } / ${ i }.png);
       const detections = await faceapi
         .detectSingleFace(img)
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (detections && detections.descriptor) {
-        customerDescriptors.push(detections.descriptor);
+        const descriptor = detections.descriptor;
+        const float32Descriptor = new Float32Array(descriptor);
+        customerDescriptors.push(float32Descriptor);
       } else {
-        console.log(`No face detected for label ${label} in image ${i}`);
+        console.log(No face detected for label ${ label } in image ${ i });
       }
     }
     descriptions.push(new faceapi.LabeledFaceDescriptors(label, customerDescriptors));
@@ -75,7 +77,7 @@ document.getElementById('timeIn').addEventListener('click', () => {
 async function saveFaceDetection(label, action) {
   try {
     const clientTime = new Date();
-    console.log(`Attempting to save face detection: ${label}, Action: ${action}, Client Time: ${clientTime}`);
+    console.log(Attempting to save face detection: ${ label }, Action: ${ action }, Client Time: ${ clientTime });
     const response = await fetch('/api/detect-face', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -84,7 +86,7 @@ async function saveFaceDetection(label, action) {
     if (!response.ok) {
       console.error('Failed to send face detection data to server:', response.statusText);
     } else {
-      console.log(`Face ${label} ${action} saved successfully.`);
+      console.log(Face ${ label } ${ action } saved successfully.);
     }
   } catch (error) {
     console.error('Error sending face detection data to server:', error);
@@ -95,7 +97,7 @@ function updateAttendanceTable(faces) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const tableHTML = `
+  const tableHTML =
     <table class="table align-middle mb-0 table-dark table-striped">
       <thead class="bg-light">
         <tr>
@@ -107,8 +109,8 @@ function updateAttendanceTable(faces) {
       </thead>
       <tbody>
         ${faces.map(face => face.timeEntries
-    .filter(entry => new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
-    .map(entry => `
+          .filter(entry => new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
+          .map(entry =>
             <tr>
               <td>
                 <div class="d-flex align-items-center">
@@ -121,15 +123,15 @@ function updateAttendanceTable(faces) {
                 <p class="fw-normal mb-1">${entry.classLabel}</p>
               </td>
               <td>
-                ${entry.timeIn ? `<p class="fw-normal mb-1">${new Date(entry.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+                ${entry.timeIn ? <p class="fw-normal mb-1">${new Date(entry.timeIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> : '<p class="fw-normal mb-1">N/A</p>'}
               </td>
               <td>
-                ${entry.timeOut ? `<p class="fw-normal mb-1">${new Date(entry.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>` : '<p class="fw-normal mb-1">N/A</p>'}
+                ${entry.timeOut ? <p class="fw-normal mb-1">${new Date(entry.timeOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p> : '<p class="fw-normal mb-1">N/A</p>'}
               </td>
-            </tr>`).join('')).join('')}
+            </tr>).join('')).join('')}
       </tbody>
     </table>
-  `;
+    ;
   attendanceContainer.innerHTML = tableHTML;
 }
 
@@ -162,7 +164,7 @@ video.addEventListener("play", async () => {
 
         if (result.distance <= 0.7) {
           detectedFace = { label, box }; // Store the detected face
-          console.log(`Detected face: ${label}`);
+          console.log(Detected face: ${ label });
           lastRecognitionTime = Date.now();
         } else {
           console.log('Face detected but not recognized.');
@@ -172,11 +174,11 @@ video.addEventListener("play", async () => {
         drawBox.draw(canvas);
       }
     });
-  }, 200); // Increased interval to 200ms
+  }, 100);
 });
 
 socket.on("face-updated", ({ label, action, time, classLabel }) => {
-  console.log(`Received update from server: ${label} ${action} at ${time} for ${classLabel}`);
+  console.log(Received update from server: ${ label } ${ action } at ${ time } for ${ classLabel });
   fetch("/api/get-faces")
     .then(response => response.json())
     .then(data => updateAttendanceTable(data))
