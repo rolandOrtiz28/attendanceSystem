@@ -19,7 +19,7 @@ Promise.all([
 function startWebcam() {
   navigator.mediaDevices
     .getUserMedia({
-      video: { width: 640, height: 480 },
+      video: { width: 320, height: 240 }, // Reduced resolution
       audio: false,
     })
     .then((stream) => {
@@ -44,9 +44,7 @@ async function getLabeledFaceDescriptions() {
         .withFaceLandmarks()
         .withFaceDescriptor();
       if (detections && detections.descriptor) {
-        const descriptor = detections.descriptor;
-        const float32Descriptor = new Float32Array(descriptor);
-        customerDescriptors.push(float32Descriptor);
+        customerDescriptors.push(detections.descriptor);
       } else {
         console.log(`No face detected for label ${label} in image ${i}`);
       }
@@ -174,7 +172,7 @@ video.addEventListener("play", async () => {
         drawBox.draw(canvas);
       }
     });
-  }, 100);
+  }, 200); // Increased interval to 200ms
 });
 
 socket.on("face-updated", ({ label, action, time, classLabel }) => {
