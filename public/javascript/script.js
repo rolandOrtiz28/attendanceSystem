@@ -49,6 +49,7 @@ async function getLabeledFaceDescriptions() {
         customerDescriptors.push(float32Descriptor);
       } else {
         console.log(`No face detected for label ${label} in image ${i}`);
+        console.log("No face");
       }
     }
     descriptions.push(new faceapi.LabeledFaceDescriptors(label, customerDescriptors));
