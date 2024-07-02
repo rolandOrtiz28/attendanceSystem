@@ -76,6 +76,7 @@ router.get('/api/get-faces', async (req, res) => {
 //   }
 // });
 router.post('/api/detect-face', async (req, res) => {
+  console.log('Request body:', req.body);
   try {
     const { label, action, clientTime } = req.body;
     console.log('Received face detection:', label, action, clientTime);
@@ -109,7 +110,7 @@ router.post('/api/detect-face', async (req, res) => {
       return res.status(400).send('Invalid class timing');
     }
     console.log(`Class label determined: ${classLabel}`);
-    
+
     if (action === 'timeIn') {
       // Check if there's already a time entry for the same class without a timeOut
       const existingEntry = faceRecord.timeEntries.find(entry => entry.classLabel === classLabel && !entry.timeOut);
@@ -135,6 +136,7 @@ router.post('/api/detect-face', async (req, res) => {
     res.status(500).send('Error saving face data');
   }
 });
+
 
 // router.get('/attendance', async (req, res) => {
 //   try {

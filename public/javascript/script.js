@@ -85,7 +85,8 @@ async function saveFaceDetection(label, action) {
       body: JSON.stringify({ label, action, clientTime }),
     });
     if (!response.ok) {
-      console.error('Failed to send face detection data to server:', response.statusText);
+      const errorText = await response.text(); // Read the error message from the server
+      console.error('Failed to send face detection data to server:', errorText);
     } else {
       console.log(`Face ${label} ${action} saved successfully.`);
     }
@@ -93,6 +94,7 @@ async function saveFaceDetection(label, action) {
     console.error('Error sending face detection data to server:', error);
   }
 }
+
 
 function updateAttendanceTable(faces) {
   const today = new Date();
