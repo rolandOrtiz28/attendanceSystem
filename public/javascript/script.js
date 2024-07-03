@@ -33,7 +33,7 @@ function startWebcam() {
 }
 
 async function getLabeledFaceDescriptions() {
-  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy", "Ath Phyly", "Ath Sophaning", "Bouen Yuthakar", "Chen Nary", "Kong Pisey", "Melvin Dela Cruz", "Naim Bunna", "Ra Eiksreyka", "Sim Visal", "Sim Votey", "Sun Sophol", "Tes Kosal", "Yoeun Chamnab"];
+  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy", "Ath Phyly", "Ath Sophaning", "Bouen Yuthakar", "Chen Nary", "Kong Pisey", "Naim Bunna", "Ra Eiksreyka", "Sim Visal", "Sim Votey", "Sun Sophol", "Tes Kosal", "Yoeun Chamnab"];
   const descriptions = [];
   for (const label of labels) {
     const customerDescriptors = [];
