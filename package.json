@@ -28,6 +28,7 @@
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
+    "qrcode": "^1.5.3",
     "session": "^0.1.0",
     "socket.io": "^4.7.5"
   }

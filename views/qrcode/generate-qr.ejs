@@ -1,0 +1,42 @@
+<% layout('/layouts/boilerplate') -%>
+<link rel="stylesheet" href="/stylesheet/generate-qr.css">
+
+<div class="container">
+  <h2 class="text-center">Generate QR Code</h2>
+  <form id="generate-qr-form">
+    <div class="mb-3">
+      <label for="staffName" class="form-label">Staff Name</label>
+      <input type="text" id="staffName" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate QR Code</button>
+  </form>
+  <div id="qr-code-result" class="mt-4"></div>
+</div>
+
+<script>
+  document.getElementById('generate-qr-form').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const staffName = document.getElementById('staffName').value;
+
+    try {
+      const response = await fetch('/api/generate-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staffName }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        document.getElementById('qr-code-result').innerHTML = `
+          <h4>QR Code for ${staffName}</h4>
+          <img src="/qr-codes/${staffName}.png" alt="QR Code" />
+        `;
+      } else {
+        alert(result.message || 'Failed to generate QR code');
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      alert('Error generating QR code');
+    }
+  });
+</script>

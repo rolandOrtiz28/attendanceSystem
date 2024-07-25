@@ -1,94 +1,54 @@
-const video = document.getElementById("video");
-const canvas = document.getElementById("overlay");
-const ctx = canvas.getContext("2d", { willReadFrequently: true });
+// Ensure attendanceContainer is defined
 const attendanceContainer = document.getElementById("attendance-container");
-let faceMatcher;
-let detectedFace = null;
-let lastRecognitionTime = 0;
-const minConfidence = 0.5;
-const recognitionCooldown = 5000; // Increased cooldown to reduce processing frequency
-const displaySize = { width: 320, height: 240 }; // Reduced video resolution for performance
 
-const socket = io();
+const qrReader = new Html5Qrcode("qr-reader");
+let detectedQR = null;
 
-async function loadModels() {
-  await Promise.all([
-    faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
-    faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-    faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-  ]);
-  startWebcam();
-}
-
-async function startWebcam() {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: displaySize, // Use reduced resolution
-    audio: false,
-  });
-  video.srcObject = stream;
-  video.play();
-}
-
-async function getLabeledFaceDescriptions() {
-  const labels = ["Roland Ortiz", "Jhea Dela Cruz", "An Phatsa", "Bunchhorn Bien", "Samrith Chanthy", "Ath Phyly", "Ath Sophaning", "Bouen Yuthakar", "Chen Nary", "Kong Pisey", "Naim Bunna", "Ra Eiksreyka", "Sim Visal", "Sim Votey", "Sun Sophol", "Tes Kosal", "Yoeun Chamnab", "Melvin Dela Cruz"];
-  const descriptions = [];
-  for (const label of labels) {
-    const customerDescriptors = [];
-    for (let i = 1; i <= 2; i++) {
-      const img = await faceapi.fetchImage(`./labels/${label}/${i}.png`);
-      const detections = await faceapi
-        .detectSingleFace(img)
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-      if (detections && detections.descriptor) {
-        const descriptor = detections.descriptor;
-        const float32Descriptor = new Float32Array(descriptor);
-        customerDescriptors.push(float32Descriptor);
-      } else {
-        console.log(`No face detected for label ${label} in image ${i}`);
-        console.log("No face");
-      }
-    }
-    descriptions.push(new faceapi.LabeledFaceDescriptors(label, customerDescriptors));
+// QR Code scanning configuration
+qrReader.start(
+  { facingMode: "environment" }, // Use rear camera
+  {
+    fps: 10,    // Frame-per-second for the scanning
+    qrbox: { width: 250, height: 250 }  // Set the QR box size
+  },
+  qrCodeMessage => {
+    detectedQR = qrCodeMessage;
+    console.log(`Detected QR Code: ${qrCodeMessage}`);
+    processQRDetection();
+  },
+  errorMessage => {
+    console.log(`QR Code scanning error: ${errorMessage}`);
   }
-  return descriptions;
-}
+);
 
-document.getElementById('timeOutBtn').addEventListener('click', () => {
-  if (detectedFace) {
-    console.log(`Time Out button clicked with detected face: ${detectedFace.label}`);
-    saveFaceDetection(detectedFace.label, 'timeOut');
+function processQRDetection() {
+  if (detectedQR) {
+    const actionSelect = document.getElementById('actionSelect').value;
+    const classSelect = document.getElementById('classSelect').value;
+    saveQRDetection(detectedQR, actionSelect, classSelect);
   } else {
-    console.log('No face detected to time out.');
+    console.log('No QR code detected to process.');
   }
-});
-
-document.getElementById('timeIn').addEventListener('click', () => {
-  if (detectedFace) {
-    console.log(`Time In button clicked with detected face: ${detectedFace.label}`);
-    saveFaceDetection(detectedFace.label, 'timeIn');
-  } else {
-    console.log('No face detected to time in.');
-  }
-});
-
-async function saveFaceDetection(label, action) {
+}
+async function saveQRDetection(qrCode, action, classLabel) {
   const clientTime = new Date();
   try {
-    const response = await fetch('/api/detect-face', {
+    const response = await fetch('/api/detect-qr', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label, action, clientTime }),
+      body: JSON.stringify({ qrCode, action, clientTime, classLabel }),
     });
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Failed to send face detection data to server:', errorText);
+      console.error(`Failed to send QR detection data to server: ${errorText}`);
     }
   } catch (error) {
-    console.error('Error sending face detection data to server:', error);
+    console.error(`Error sending QR detection data to server: ${error}`);
   }
 }
 
+
+// Function to update the attendance table
 function updateAttendanceTable(faces) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -119,55 +79,6 @@ function updateAttendanceTable(faces) {
   attendanceContainer.innerHTML = tableHTML;
 }
 
-video.addEventListener("play", async () => {
-  const labeledFaceDescriptors = await getLabeledFaceDescriptions();
-  faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6);
-
-  const displaySize = { width: video.width, height: video.height };
-  faceapi.matchDimensions(canvas, displaySize);
-
-  setInterval(async () => {
-    const currentTime = Date.now();
-    const timeSinceLastRecognition = currentTime - lastRecognitionTime;
-  
-    if (timeSinceLastRecognition < recognitionCooldown) {
-      return;
-    }
-  
-    const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-    const resizedDetections = faceapi.resizeResults(detections, displaySize);
-  
-    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-  
-    resizedDetections.forEach((detection) => {
-      if (detection.detection.score >= minConfidence) {
-        const descriptor = detection.descriptor;
-        const box = detection.detection.box;
-        const result = faceMatcher.findBestMatch(descriptor);
-        const label = result.toString().replace(/\s+\(.*?\)/, '');
-  
-        if (result.distance <= 0.6) { // Adjust this value
-          detectedFace = { label, box }; // Store the detected face
-          console.log(`Detected face: ${label}`);
-          lastRecognitionTime = Date.now();
-        } else {
-          console.log('Face detected but not recognized.');
-        }
-  
-        const drawBox = new faceapi.draw.DrawBox(box, { label });
-        drawBox.draw(canvas);
-      }
-    });
-  }, 200); 
-});
-
-socket.on("face-updated", () => {
-  fetch("/api/get-faces")
-    .then(response => response.json())
-    .then(data => updateAttendanceTable(data))
-    .catch(error => console.error('Error fetching face data:', error));
-});
-
 function updateClock() {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString();
 }
@@ -181,4 +92,13 @@ window.onload = function () {
     .catch(error => console.error('Error fetching face data:', error));
 };
 
-loadModels();
+// Socket.io integration for real-time updates
+const socket = io();
+
+socket.on('face-updated', data => {
+  console.log('Real-time update received:', data);
+  fetch("/api/get-faces")
+    .then(response => response.json())
+    .then(data => updateAttendanceTable(data))
+    .catch(error => console.error('Error fetching face data:', error));
+});

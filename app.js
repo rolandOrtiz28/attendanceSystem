@@ -35,6 +35,7 @@ const DailyRecord = require('./Model/DailyRecord');
 
 // routes
 const faceRoute = require('./routes/face');
+const generateQrRoute = require('./routes/generateqr');
 const teacherRoute = require('./routes/teacher');
 const secret = process.env.SESSION_SECRET
 
@@ -64,6 +65,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'models')));
+app.use('/qr-codes', express.static(path.join(__dirname, 'qr-codes')));
 app.use(session(sessionConfig));
 
 app.use(passport.initialize());
@@ -119,6 +121,7 @@ app.use(bodyParser.json());
 
 app.use('/', faceRoute);
 app.use('/teacher', teacherRoute);
+app.use('/', generateQrRoute);
 
 io.on('connection', (socket) => {
     console.log('a user connected');

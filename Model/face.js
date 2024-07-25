@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 const timeEntrySchema = new mongoose.Schema({
    timeIn: Date,

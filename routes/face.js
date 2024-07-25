@@ -9,16 +9,25 @@ router.get('/loginface', (req,res)=>{
 res.render('home/loginface')
 })
 
-
 router.get('/api/get-faces', async (req, res) => {
   try {
-    const today = moment().tz('Asia/Phnom_Penh').startOf('day');
+    const todayStart = moment().tz('Asia/Phnom_Penh').startOf('day').toDate();
+    const tomorrowStart = moment().tz('Asia/Phnom_Penh').add(1, 'day').startOf('day').toDate();
 
     const faces = await Face.find({
-      'timeEntries.timeIn': { $gte: today.toDate() }
+      'timeEntries.timeIn': { $gte: todayStart, $lt: tomorrowStart }
     });
 
-    res.json(faces);
+    // Filter time entries to only include those from today
+    const filteredFaces = faces.map(face => ({
+      label: face.label,
+      timeEntries: face.timeEntries.filter(entry => {
+        const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh');
+        return timeIn.isSame(todayStart, 'day');
+      })
+    }));
+
+    res.json(filteredFaces);
   } catch (error) {
     console.error('Error fetching face data:', error);
     res.status(500).send('Error fetching face data');
@@ -27,51 +36,35 @@ router.get('/api/get-faces', async (req, res) => {
 
 
 
-router.post('/api/detect-face', async (req, res) => {
+router.post('/api/detect-qr', async (req, res) => {
   console.log('Request body:', req.body);
+ 
   try {
-    const { label, action, clientTime } = req.body;
-    console.log('Received face detection:', label, action, clientTime);
+    const { qrCode, action, clientTime, classLabel } = req.body;
+    console.log('Received QR detection:', qrCode, action, clientTime, classLabel);
 
     if (!['timeIn', 'timeOut'].includes(action)) {
       return res.status(400).send('Invalid action');
     }
 
-    let faceRecord = await Face.findOne({ label });
+    let faceRecord = await Face.findOne({ label: qrCode });
 
     if (!faceRecord) {
-      faceRecord = new Face({ label, timeEntries: [] });
+      faceRecord = new Face({ label: qrCode, timeEntries: [] });
     }
 
-    const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');  // Convert client time to the server time zone
-    const now = moment().tz('Asia/Phnom_Penh');  // Current server time
+    const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
+    const now = moment().tz('Asia/Phnom_Penh');
     console.log('Client time:', clientMoment.format());
     console.log('Current server time:', now.format());
 
-    // Determine the class label based on the client time
-    let classLabel;
-    const currentHour = clientMoment.hour();
-    const currentMinutes = clientMoment.minute();
-    if ((currentHour >= 7 && currentHour < 11) || (currentHour === 10 && currentMinutes <= 45)) {
-      classLabel = 'Khmer Class (Full-Time)';
-    } else if ((currentHour >= 13 && currentHour < 17) || (currentHour === 16 && currentMinutes <= 45)) {
-      classLabel = 'English Class (Full-Time)';
-    } else if ((currentHour >= 17 && currentHour < 20) || (currentHour === 19 && currentMinutes <= 30)) {
-      classLabel = 'English Class (Part-Time)';
-    } else {
-      return res.status(400).send('Invalid class timing');
-    }
-    console.log(`Class label determined: ${classLabel}`);
-
     if (action === 'timeIn') {
-      // Check if there's already a time entry for the same class without a timeOut
       const existingEntry = faceRecord.timeEntries.find(entry => entry.classLabel === classLabel && !entry.timeOut);
       if (existingEntry) {
         return res.status(400).send('Already timed in for this class');
       }
       faceRecord.timeEntries.push({ timeIn: clientMoment.toDate(), classLabel });
     } else if (action === 'timeOut') {
-      // Find the last time entry for the same class without a timeOut
       const lastEntry = faceRecord.timeEntries.find(entry => entry.classLabel === classLabel && !entry.timeOut);
       if (lastEntry) {
         lastEntry.timeOut = clientMoment.toDate();
@@ -81,14 +74,13 @@ router.post('/api/detect-face', async (req, res) => {
     }
 
     await faceRecord.save();
-    req.app.get('io').emit('face-updated', { label, action, time: clientMoment.toDate(), classLabel });
-    res.status(201).send(`Face ${action} recorded successfully for ${classLabel}`);
+    req.app.get('io').emit('face-updated', { label: qrCode, action, time: clientMoment.toDate(), classLabel });
+    res.status(201).send(`QR ${action} recorded successfully for ${classLabel}`);
   } catch (error) {
-    console.error('Error saving face data:', error);
-    res.status(500).send('Error saving face data');
+    console.error('Error saving QR data:', error);
+    res.status(500).send('Error saving QR data');
   }
 });
-
 
 
 router.get('/attendance', async (req, res) => {
@@ -98,13 +90,9 @@ router.get('/attendance', async (req, res) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1); // Set to the start of the next day
 
-    // Find faces with timeEntries within the current day
+    // Find all faces with timeEntries within the current day
     const faces = await Face.find({
-      timeEntries: {
-        $elemMatch: {
-          timeIn: { $gte: today, $lt: tomorrow }
-        }
-      }
+      'timeEntries.timeIn': { $gte: today, $lt: tomorrow }
     });
 
     console.log('Retrieved faces:', faces); // Log retrieved faces
@@ -112,7 +100,8 @@ router.get('/attendance', async (req, res) => {
     const recordsByClass = {
       'Khmer Class (Full-Time)': [],
       'English Class (Full-Time)': [],
-      'English Class (Part-Time)': []
+      'English Class (Part-Time)': [],
+      'Office Hour (Part-Time)': []
     };
 
     faces.forEach(face => {
@@ -138,6 +127,7 @@ router.get('/attendance', async (req, res) => {
     res.status(500).send('Error retrieving face data');
   }
 });
+
 
 
 module.exports = router
