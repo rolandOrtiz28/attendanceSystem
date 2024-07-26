@@ -10,7 +10,7 @@ const { Server } = require('socket.io');
 const io = new Server(server);
 const cron = require('node-cron');
 const ejsMate = require('ejs-mate');
-const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/wfsAttendanceSystem';
+const dbUrl = 'mongodb://127.0.0.1:27017/wfsAttendanceSystem';
 const PORT = process.env.PORT || 3000;
 const session = require('express-session');
 const MongoDBStore = require('connect-mongo');
@@ -18,7 +18,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const flash = require('connect-flash');
 
-//
+//process.env.DB_URL ||
 
 // MongoDB connection
 mongoose.connect(dbUrl, {});
@@ -65,7 +65,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'models')));
-app.use('/qr-codes', express.static(path.join(__dirname, 'qr-codes')));
+app.use('/qrcodes', express.static(path.join(__dirname, 'qrcodes', 'qr-codes')));
 app.use(session(sessionConfig));
 
 app.use(passport.initialize());
