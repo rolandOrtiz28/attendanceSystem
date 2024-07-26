@@ -127,10 +127,14 @@ canvas {
     letter-spacing: 7px;
 }
 
-/* #qr-reader {
-    width: 100%;
-    max-width: 500px; 
-    height: 300px;
-    position: relative;
-    margin: 0 auto;
-} */
+.btn-group button.active {
+    background-color: #007bff; /* Active button background color */
+    color: white; /* Active button text color */
+    border: 1px solid #007bff; /* Active button border color */
+  }
+  
+  .btn-group button {
+    border-radius: 0; /* Remove button border radius for a flat look */
+    margin: 0; /* Remove default margin */
+    padding: 10px 20px; /* Adjust button padding */
+  }

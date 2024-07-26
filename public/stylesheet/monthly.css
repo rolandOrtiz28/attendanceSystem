@@ -1,0 +1,31 @@
+/* Style for the monthly attendance table */
+.table-container {
+    overflow-x: auto;
+  }
+  
+  .table {
+    font-size: 0.8rem; /* Adjust font size as needed */
+    border-collapse: collapse; /* Ensure borders are collapsed into single borders */
+    width: 100%; /* Make sure the table takes full width of the container */
+  }
+  
+  .table th, .table td {
+    border: 1px solid #dee2e6; /* Light gray border color */
+    padding: 0.5rem; /* Adjust padding for better spacing */
+    text-align: center; /* Center align text */
+  }
+  
+  .table th {
+    background-color: #f8f9fa; /* Light background color for headers */
+  }
+  
+  .table td {
+    background-color: #ffffff; /* White background color for cells */
+  }
+  th{
+    font-size: 10px;
+  }
+
+  .time-in, .time-out{
+    font-size: 10px;
+  }

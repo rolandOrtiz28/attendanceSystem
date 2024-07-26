@@ -1,8 +1,9 @@
 // Ensure attendanceContainer is defined
 const attendanceContainer = document.getElementById("attendance-container");
-
 const qrReader = new Html5Qrcode("qr-reader");
 let detectedQR = null;
+let selectedAction = 'timeIn'; // Default value
+let selectedClass = 'Khmer Class (Full-Time)'; // Default value
 
 // QR Code scanning configuration
 qrReader.start(
@@ -23,13 +24,12 @@ qrReader.start(
 
 function processQRDetection() {
   if (detectedQR) {
-    const actionSelect = document.getElementById('actionSelect').value;
-    const classSelect = document.getElementById('classSelect').value;
-    saveQRDetection(detectedQR, actionSelect, classSelect);
+    saveQRDetection(detectedQR, selectedAction, selectedClass);
   } else {
     console.log('No QR code detected to process.');
   }
 }
+
 async function saveQRDetection(qrCode, action, classLabel) {
   const clientTime = new Date();
   try {
@@ -38,15 +38,16 @@ async function saveQRDetection(qrCode, action, classLabel) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ qrCode, action, clientTime, classLabel }),
     });
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Failed to send QR detection data to server: ${errorText}`);
+      // Log error to console instead of showing an alert
+      console.error(`Error: ${errorText}`);
     }
   } catch (error) {
     console.error(`Error sending QR detection data to server: ${error}`);
   }
 }
-
 
 // Function to update the attendance table
 function updateAttendanceTable(faces) {
@@ -85,20 +86,41 @@ function updateClock() {
 
 setInterval(updateClock, 1000);
 
-window.onload = function () {
+// Handle button clicks for action and class selection
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.btn-group button').forEach(button => {
+    button.addEventListener('click', (event) => {
+      const action = event.target.getAttribute('data-action');
+      const classLabel = event.target.getAttribute('data-class');
+
+      if (action) {
+        selectedAction = action;
+        document.querySelectorAll('[data-action]').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        console.log(`Selected Action: ${selectedAction}`);
+      } else if (classLabel) {
+        selectedClass = classLabel;
+        document.querySelectorAll('[data-class]').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        console.log(`Selected Class: ${selectedClass}`);
+      }
+    });
+  });
+
+  // Fetch initial face data
   fetch("/api/get-faces")
     .then(response => response.json())
     .then(data => updateAttendanceTable(data))
     .catch(error => console.error('Error fetching face data:', error));
-};
 
-// Socket.io integration for real-time updates
-const socket = io();
+  // Socket.io integration for real-time updates
+  const socket = io();
 
-socket.on('face-updated', data => {
-  console.log('Real-time update received:', data);
-  fetch("/api/get-faces")
-    .then(response => response.json())
-    .then(data => updateAttendanceTable(data))
-    .catch(error => console.error('Error fetching face data:', error));
+  socket.on('face-updated', data => {
+    console.log('Real-time update received:', data);
+    fetch("/api/get-faces")
+      .then(response => response.json())
+      .then(data => updateAttendanceTable(data))
+      .catch(error => console.error('Error fetching face data:', error));
+  });
 });

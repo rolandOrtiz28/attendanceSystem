@@ -1,7 +1,10 @@
 <% layout('/layouts/boilerplate') -%>
 <link rel="stylesheet" href="/stylesheet/attendance.css">
-<a href="/generate-qr" class="btn btn-sm btn-primate">Add new Staff</a>
+
 <div class="container">
+  <a href="/generate-qr" class="btn btn-sm btn-primary mb-2">Add new Staff</a>
+  <a href="/attendance/monthly?month=<%= new Date(currentDate).toISOString().slice(0, 7) %>" class="btn btn-sm btn-primary mb-2">View Monthly Attendance</a>
+  <a href="/" class="btn btn-sm btn-primary mb-2">Home</a>
   <% ['Khmer Class (Full-Time)', 'English Class (Full-Time)', 'English Class (Part-Time)', 'Office Hour (Part-Time)'].forEach(classLabel => { %>
     <div class="table-container">
       <h2 class="text-center">
@@ -55,6 +58,8 @@
   <% }) %>
   <div class="d-flex justify-content-end mb-2">
     <button id="download-excel" class="btn btn-success">Download Excel <i class="fas fa-file-excel ms-1"></i></button>
+    
+
   </div>
 </div>
 

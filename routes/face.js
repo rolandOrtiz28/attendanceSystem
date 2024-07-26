@@ -33,12 +33,10 @@ router.get('/api/get-faces', async (req, res) => {
     res.status(500).send('Error fetching face data');
   }
 });
-
-
-
 router.post('/api/detect-qr', async (req, res) => {
+
   console.log('Request body:', req.body);
- 
+
   try {
     const { qrCode, action, clientTime, classLabel } = req.body;
     console.log('Received QR detection:', qrCode, action, clientTime, classLabel);
@@ -54,23 +52,35 @@ router.post('/api/detect-qr', async (req, res) => {
     }
 
     const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
-    const now = moment().tz('Asia/Phnom_Penh');
     console.log('Client time:', clientMoment.format());
-    console.log('Current server time:', now.format());
 
     if (action === 'timeIn') {
-      const existingEntry = faceRecord.timeEntries.find(entry => entry.classLabel === classLabel && !entry.timeOut);
+      const existingEntry = faceRecord.timeEntries.find(
+        entry => entry.classLabel === classLabel && !entry.timeOut
+      );
+      
+      console.log('Existing entry for timeIn:', existingEntry);
+
       if (existingEntry) {
         return res.status(400).send('Already timed in for this class');
       }
+      
       faceRecord.timeEntries.push({ timeIn: clientMoment.toDate(), classLabel });
+      console.log('Added timeIn entry:', faceRecord.timeEntries);
     } else if (action === 'timeOut') {
-      const lastEntry = faceRecord.timeEntries.find(entry => entry.classLabel === classLabel && !entry.timeOut);
+      const lastEntry = faceRecord.timeEntries.find(
+        entry => entry.classLabel === classLabel && !entry.timeOut
+      );
+
+      console.log('Last entry for timeOut:', lastEntry);
+
       if (lastEntry) {
         lastEntry.timeOut = clientMoment.toDate();
       } else {
         return res.status(400).send('No matching time in entry found for time out');
       }
+      
+      console.log('Updated timeOut entry:', faceRecord.timeEntries);
     }
 
     await faceRecord.save();
@@ -81,7 +91,6 @@ router.post('/api/detect-qr', async (req, res) => {
     res.status(500).send('Error saving QR data');
   }
 });
-
 
 router.get('/attendance', async (req, res) => {
   try {
@@ -122,6 +131,60 @@ router.get('/attendance', async (req, res) => {
     console.log('Categorized records:', recordsByClass); // Log categorized records
 
     res.render('./attendance/index', { recordsByClass, currentDate: today });
+  } catch (error) {
+    console.error('Error retrieving face data:', error);
+    res.status(500).send('Error retrieving face data');
+  }
+});
+
+// Route to display monthly attendance
+// Route to display monthly attendance
+router.get('/attendance/monthly', async (req, res) => {
+  try {
+    const month = req.query.month || new Date().toISOString().slice(0, 7); // Default to the current month if not provided
+    const [year, monthNumber] = month.split('-').map(Number);
+    const startOfMonth = new Date(year, monthNumber - 1, 1);
+    const endOfMonth = new Date(year, monthNumber, 0, 23, 59, 59, 999);
+
+    // Find all faces with timeEntries within the specified month
+    const faces = await Face.find({
+      'timeEntries.timeIn': { $gte: startOfMonth, $lt: endOfMonth }
+    });
+
+    const recordsByDay = {};
+    const staffList = new Set();
+
+    faces.forEach(face => {
+      face.timeEntries.forEach(entry => {
+        const timeIn = new Date(entry.timeIn);
+        if (timeIn >= startOfMonth && timeIn < endOfMonth) {
+          const day = timeIn.getDate();
+          const label = face.label;
+
+          if (!recordsByDay[label]) {
+            recordsByDay[label] = {};
+            staffList.add(label);
+          }
+
+          if (!recordsByDay[label][day]) {
+            recordsByDay[label][day] = {
+              timeIn: null,
+              timeOut: null
+            };
+          }
+
+          // Set timeIn and timeOut based on availability
+          if (entry.timeIn) {
+            recordsByDay[label][day].timeIn = entry.timeIn;
+          }
+          if (entry.timeOut) {
+            recordsByDay[label][day].timeOut = entry.timeOut;
+          }
+        }
+      });
+    });
+
+    res.render('./attendance/monthly', { recordsByDay, month, staffList: Array.from(staffList) });
   } catch (error) {
     console.error('Error retrieving face data:', error);
     res.status(500).send('Error retrieving face data');
