@@ -143,20 +143,15 @@ router.get('/attendance', async (req, res) => {
 // Route to display monthly attendance
 router.get('/attendance/monthly', async (req, res) => {
   try {
-    const month = req.query.month || new Date().toISOString().slice(0, 7); // Default to the current month if not provided
+    const month = req.query.month || moment().format('YYYY-MM'); // Default to the current month if not provided
     const [year, monthNumber] = month.split('-').map(Number);
-    const startOfMonth = new Date(year, monthNumber - 1, 1);
-    const endOfMonth = new Date(year, monthNumber, 0, 23, 59, 59, 999);
-
-    console.log('Start of Month:', startOfMonth);
-    console.log('End of Month:', endOfMonth);
+    const startOfMonth = moment.utc([year, monthNumber - 1]).startOf('month').toDate(); // Start of month in UTC
+    const endOfMonth = moment.utc([year, monthNumber]).endOf('month').toDate(); // End of month in UTC
 
     // Find all faces with timeEntries within the specified month
     const faces = await Face.find({
       'timeEntries.timeIn': { $gte: startOfMonth, $lt: endOfMonth }
     });
-
-    console.log('Retrieved faces:', faces);
 
     const recordsByClass = {
       'Khmer Class (Full-Time)': [],
@@ -167,20 +162,18 @@ router.get('/attendance/monthly', async (req, res) => {
 
     faces.forEach(face => {
       face.timeEntries.forEach(entry => {
-        const timeIn = new Date(entry.timeIn);
+        const timeIn = moment(entry.timeIn).tz('UTC').toDate(); // Convert to UTC
         if (timeIn >= startOfMonth && timeIn < endOfMonth) {
           if (entry.classLabel) {
             recordsByClass[entry.classLabel].push({
               label: face.label,
-              timeIn: entry.timeIn,
-              timeOut: entry.timeOut
+              timeIn: timeIn,
+              timeOut: moment(entry.timeOut).tz('UTC').toDate() // Convert to UTC
             });
           }
         }
       });
     });
-
-    console.log('Categorized records:', recordsByClass);
 
     res.render('./attendance/monthly', { recordsByClass, month });
   } catch (error) {
@@ -188,6 +181,5 @@ router.get('/attendance/monthly', async (req, res) => {
     res.status(500).send('Error retrieving face data');
   }
 });
-
 
 module.exports = router
