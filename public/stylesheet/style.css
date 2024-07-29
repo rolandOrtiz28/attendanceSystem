@@ -1,7 +1,7 @@
 .container-fluid {
     display: flex;
     flex-wrap: wrap;
-   
+
     padding: 2rem;
     border-radius: 10px;
     background-color: #272727;
@@ -132,9 +132,13 @@ canvas {
     color: white; /* Active button text color */
     border: 1px solid #007bff; /* Active button border color */
   }
-  
+
   .btn-group button {
-    border-radius: 0; /* Remove button border radius for a flat look */
+    border-radius: 10px; /* Remove button border radius for a flat look */
     margin: 0; /* Remove default margin */
     padding: 10px 20px; /* Adjust button padding */
   }
+
+.btn-group .btn-class{
+font-size: 12px;
+}

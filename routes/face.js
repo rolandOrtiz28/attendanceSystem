@@ -33,6 +33,8 @@ router.get('/api/get-faces', async (req, res) => {
     res.status(500).send('Error fetching face data');
   }
 });
+
+
 router.post('/api/detect-qr', async (req, res) => {
 
   console.log('Request body:', req.body);
@@ -58,13 +60,13 @@ router.post('/api/detect-qr', async (req, res) => {
       const existingEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel && !entry.timeOut
       );
-      
+
       console.log('Existing entry for timeIn:', existingEntry);
 
       if (existingEntry) {
         return res.status(400).send('Already timed in for this class');
       }
-      
+
       faceRecord.timeEntries.push({ timeIn: clientMoment.toDate(), classLabel });
       console.log('Added timeIn entry:', faceRecord.timeEntries);
     } else if (action === 'timeOut') {
@@ -79,7 +81,7 @@ router.post('/api/detect-qr', async (req, res) => {
       } else {
         return res.status(400).send('No matching time in entry found for time out');
       }
-      
+
       console.log('Updated timeOut entry:', faceRecord.timeEntries);
     }
 
@@ -138,7 +140,6 @@ router.get('/attendance', async (req, res) => {
 });
 
 // Route to display monthly attendance
-// Route to display monthly attendance
 router.get('/attendance/monthly', async (req, res) => {
   try {
     const month = req.query.month || new Date().toISOString().slice(0, 7); // Default to the current month if not provided
@@ -151,46 +152,34 @@ router.get('/attendance/monthly', async (req, res) => {
       'timeEntries.timeIn': { $gte: startOfMonth, $lt: endOfMonth }
     });
 
-    const recordsByDay = {};
-    const staffList = new Set();
+    const recordsByClass = {
+      'Khmer Class (Full-Time)': [],
+      'English Class (Full-Time)': [],
+      'English Class (Part-Time)': [],
+      'Office Hour (Part-Time)': []
+    };
 
     faces.forEach(face => {
       face.timeEntries.forEach(entry => {
         const timeIn = new Date(entry.timeIn);
         if (timeIn >= startOfMonth && timeIn < endOfMonth) {
-          const day = timeIn.getDate();
-          const label = face.label;
-
-          if (!recordsByDay[label]) {
-            recordsByDay[label] = {};
-            staffList.add(label);
-          }
-
-          if (!recordsByDay[label][day]) {
-            recordsByDay[label][day] = {
-              timeIn: null,
-              timeOut: null
-            };
-          }
-
-          // Set timeIn and timeOut based on availability
-          if (entry.timeIn) {
-            recordsByDay[label][day].timeIn = entry.timeIn;
-          }
-          if (entry.timeOut) {
-            recordsByDay[label][day].timeOut = entry.timeOut;
+          if (entry.classLabel) {
+            recordsByClass[entry.classLabel].push({
+              label: face.label,
+              timeIn: entry.timeIn,
+              timeOut: entry.timeOut
+            });
           }
         }
       });
     });
 
-    res.render('./attendance/monthly', { recordsByDay, month, staffList: Array.from(staffList) });
+    res.render('./attendance/monthly', { recordsByClass, month });
   } catch (error) {
     console.error('Error retrieving face data:', error);
     res.status(500).send('Error retrieving face data');
   }
 });
-
 
 
 module.exports = router
