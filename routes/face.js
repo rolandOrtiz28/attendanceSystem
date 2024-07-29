@@ -139,6 +139,7 @@ router.get('/attendance', async (req, res) => {
   }
 });
 
+
 // Route to display monthly attendance
 router.get('/attendance/monthly', async (req, res) => {
   try {
@@ -147,10 +148,15 @@ router.get('/attendance/monthly', async (req, res) => {
     const startOfMonth = new Date(year, monthNumber - 1, 1);
     const endOfMonth = new Date(year, monthNumber, 0, 23, 59, 59, 999);
 
+    console.log('Start of Month:', startOfMonth);
+    console.log('End of Month:', endOfMonth);
+
     // Find all faces with timeEntries within the specified month
     const faces = await Face.find({
       'timeEntries.timeIn': { $gte: startOfMonth, $lt: endOfMonth }
     });
+
+    console.log('Retrieved faces:', faces);
 
     const recordsByClass = {
       'Khmer Class (Full-Time)': [],
@@ -173,6 +179,8 @@ router.get('/attendance/monthly', async (req, res) => {
         }
       });
     });
+
+    console.log('Categorized records:', recordsByClass);
 
     res.render('./attendance/monthly', { recordsByClass, month });
   } catch (error) {
