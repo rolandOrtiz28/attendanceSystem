@@ -41,7 +41,6 @@ async function saveQRDetection(qrCode, action, classLabel) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Log error to console instead of showing an alert
       console.error(`Error: ${errorText}`);
     }
   } catch (error) {
@@ -49,7 +48,6 @@ async function saveQRDetection(qrCode, action, classLabel) {
   }
 }
 
-// Function to update the attendance table
 function updateAttendanceTable(faces) {
   const now = new Date();
   const currentHour = now.getHours();
@@ -105,17 +103,46 @@ function updateAttendanceTable(faces) {
       </tbody>
     </table>
   `;
-
   attendanceContainer.innerHTML = tableHTML;
 }
+
 function updateClock() {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString();
 }
 
 setInterval(updateClock, 1000);
 
+// Function to auto-select the class based on the current time
+function autoSelectClass() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
+
+  if ((currentHour >= 6 && currentHour <= 11) || (currentHour === 11 && currentMinutes <= 59)) {
+    selectedClass = 'Khmer Class (Full-Time)';
+  } else if (currentHour >= 12 && currentHour <= 16 || (currentHour === 16 && currentMinutes <= 49)) {
+    selectedClass = 'English Class (Full-Time)';
+  } else if (currentHour >= 17 && currentHour <= 21 || (currentHour === 21 && currentMinutes <= 59)) {
+    selectedClass = 'English Class (Part-Time)';
+  } else {
+    selectedClass = 'Khmer Class (Full-Time)'; // Default fallback
+  }
+
+  document.querySelectorAll('.btn-class').forEach(button => {
+    button.classList.remove('active');
+    if (button.getAttribute('data-class') === selectedClass) {
+      button.classList.add('active');
+    }
+  });
+
+  console.log(`Auto-selected Class: ${selectedClass}`);
+}
+
 // Handle button clicks for action and class selection
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-select the class on page load
+  autoSelectClass();
+
   document.querySelectorAll('.btn-group button').forEach(button => {
     button.addEventListener('click', (event) => {
       const action = event.target.getAttribute('data-action');
