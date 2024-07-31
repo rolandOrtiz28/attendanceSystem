@@ -38,7 +38,9 @@
               <% const day=new Date(record.timeIn).getDate(); %>
                 <tr>
                   <td>
-                    <%= record.label %>
+                    <a href="/attendance/personal/<%= encodeURIComponent(record.label) %>?month=<%= month %>">
+                      <%= record.label %>
+                    </a>
                   </td>
                   <% for (let dayOfMonth=1; dayOfMonth <=new Date(new Date(month).getFullYear(), new
                     Date(month).getMonth() + 1, 0).getDate(); dayOfMonth++) { %>

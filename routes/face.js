@@ -182,4 +182,95 @@ router.get('/attendance/monthly', async (req, res) => {
   }
 });
 
+
+router.get('/attendance/personal/:label', async (req, res) => {
+  try {
+    const { label } = req.params;
+    const { month } = req.query;
+
+    console.log('Requested month:', month);
+
+    const monthStart = new Date(month);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
+
+    console.log('Month Start:', monthStart);
+    console.log('Month End:', monthEnd);
+
+    const face = await Face.findOne({
+      label,
+      'timeEntries.timeIn': {
+        $gte: monthStart,
+        $lte: monthEnd
+      }
+    }).exec();
+
+    if (!face) {
+      return res.status(404).send('No records found');
+    }
+
+    // Group records by class
+    const recordsByClass = face.timeEntries.reduce((acc, entry) => {
+      if (!acc[entry.classLabel]) {
+        acc[entry.classLabel] = [];
+      }
+      acc[entry.classLabel].push(entry);
+      return acc;
+    }, {});
+
+    res.render('./attendance/personal', {
+      label,
+      month,
+      recordsByClass
+    });
+  } catch (error) {
+    console.error('Error retrieving personal record data:', error);
+    res.status(500).send('Error retrieving personal record data');
+  }
+});
+
+
+router.post('/attendance/personal/:label/delete', async (req, res) => {
+  try {
+    const { label } = req.params;
+    const { timeIn } = req.body;
+
+    console.log('Received timeIn:', timeIn);
+
+    // Convert timeIn to Date object
+    const timeInDate = new Date(timeIn);
+    console.log('Converted timeInDate:', timeInDate);
+
+    if (isNaN(timeInDate.getTime())) {
+      console.error('Invalid timeIn date:', timeIn);
+      return res.status(400).send('Invalid timeIn value');
+    }
+
+    // Find the staff member
+    const face = await Face.findOne({ label });
+
+    if (!face) {
+      return res.status(404).send('Staff member not found');
+    }
+
+    // Log the timeEntries before deletion
+    console.log('Current timeEntries:', face.timeEntries);
+
+    // Remove the specific time entry by comparing the exact date and time
+    face.timeEntries = face.timeEntries.filter(entry => new Date(entry.timeIn).getTime() !== timeInDate.getTime());
+
+    // Log the timeEntries after deletion
+    console.log('Updated timeEntries:', face.timeEntries);
+
+    // Save the updated document
+    await face.save();
+
+    // Redirect back to the personal record page
+    res.redirect(`/attendance/personal/${encodeURIComponent(label)}?month=${req.query.month}`);
+  } catch (error) {
+    console.error('Error deleting time entry:', error);
+    res.status(500).send('Error deleting time entry');
+  }
+});
+
+
 module.exports = router
