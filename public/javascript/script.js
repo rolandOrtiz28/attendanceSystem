@@ -51,8 +51,38 @@ async function saveQRDetection(qrCode, action, classLabel) {
 
 // Function to update the attendance table
 function updateAttendanceTable(faces) {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Define time ranges for class periods
+  const timeRanges = {
+    'Khmer Class (Full-Time)': { start: 6, end: 11, endMinutes: 59 },
+    'Office Hour (Part-Time)': { start: 6, end: 11, endMinutes: 59 },
+    'English Class (Full-Time)': { start: 12, end: 16, endMinutes: 49 },
+    'English Class (Part-Time)': { start: 17, end: 21, endMinutes: 59 }
+  };
+
+  let filteredEntries = [];
+
+  // Determine the current class period based on time
+  for (const [classLabel, range] of Object.entries(timeRanges)) {
+    if (currentHour > range.start && currentHour < range.end ||
+        (currentHour === range.end && currentMinutes <= range.endMinutes)) {
+      filteredEntries = faces.flatMap(face => face.timeEntries
+        .filter(entry => entry.classLabel === classLabel &&
+          new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
+        .map(entry => ({
+          label: face.label,
+          classLabel: entry.classLabel,
+          timeIn: entry.timeIn,
+          timeOut: entry.timeOut
+        })));
+      break;
+    }
+  }
 
   const tableHTML = `
     <table class="table align-middle mb-0 table-dark table-striped">
@@ -65,21 +95,19 @@ function updateAttendanceTable(faces) {
         </tr>
       </thead>
       <tbody>
-        ${faces.map(face => face.timeEntries
-    .filter(entry => new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
-    .map(entry => `
+        ${filteredEntries.map(entry => `
             <tr>
-              <td>${face.label}</td>
+              <td>${entry.label}</td>
               <td>${entry.classLabel}</td>
               <td>${entry.timeIn ? new Date(entry.timeIn).toLocaleTimeString() : 'N/A'}</td>
               <td>${entry.timeOut ? new Date(entry.timeOut).toLocaleTimeString() : 'N/A'}</td>
-            </tr>`).join('')).join('')}
+            </tr>`).join('')}
       </tbody>
     </table>
   `;
+
   attendanceContainer.innerHTML = tableHTML;
 }
-
 function updateClock() {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString();
 }
