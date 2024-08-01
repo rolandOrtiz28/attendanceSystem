@@ -49,76 +49,68 @@ async function saveQRDetection(qrCode, action, classLabel) {
 }
 
 function updateAttendanceTable(faces) {
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinutes = now.getMinutes();
+  // Get the current date
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set to the start of the day
 
-
-console.log(`Current Time: ${currentHour}:${currentMinutes}`);
   // Define time ranges for class periods
   const timeRanges = {
-    'Khmer Class (Full-Time)': { start: 6, end: 11, endMinutes: 59 },
-    'Office Hour (Part-Time)': { start: 6, end: 11, endMinutes: 59 },
+    'Khmer Class (Full-Time)': { start: 1, end: 11, endMinutes: 59 },
+    'Office Hour (Part-Time)': { start: 1, end: 11, endMinutes: 59 },
     'English Class (Full-Time)': { start: 12, end: 16, endMinutes: 59 },
     'English Class (Part-Time)': { start: 17, end: 21, endMinutes: 59 }
   };
-console.log('Time Ranges:', JSON.stringify(timeRanges, null, 2));
-  let filteredEntries = [];
-  let selectedClass = '';
 
-  // Determine the current class period based on time
-  for (const [classLabel, range] of Object.entries(timeRanges)) {
-    if (
-      (currentHour > range.start && currentHour < range.end) ||
-      (currentHour === range.end && currentMinutes <= range.endMinutes)
-    ) {
-      selectedClass = classLabel;
-      break;
-    }
+  // Group entries by class
+  const groupedEntries = {};
+  faces.forEach(face => {
+    face.timeEntries.forEach(entry => {
+      const classLabel = entry.classLabel;
+      if (!groupedEntries[classLabel]) {
+        groupedEntries[classLabel] = [];
+      }
+      if (new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime()) {
+        groupedEntries[classLabel].push({
+          label: face.label,
+          classLabel: entry.classLabel,
+          timeIn: entry.timeIn,
+          timeOut: entry.timeOut
+        });
+      }
+    });
+  });
+
+  // Generate HTML for each class
+  let tableHTML = '';
+  for (const [classLabel, entries] of Object.entries(groupedEntries)) {
+    tableHTML += `
+      <h3 class="text-center mt-2">${classLabel}</h3>
+      <table class="table align-middle mb-0 table-dark table-striped">
+        <thead class="bg-light">
+          <tr>
+            <th>Name</th>
+            <th>Class</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map(entry => `
+              <tr>
+                <td>${entry.label}</td>
+                <td>${entry.classLabel}</td>
+                <td>${entry.timeIn ? new Date(entry.timeIn).toLocaleTimeString() : 'N/A'}</td>
+                <td>${entry.timeOut ? new Date(entry.timeOut).toLocaleTimeString() : 'N/A'}</td>
+              </tr>`).join('')}
+        </tbody>
+      </table>
+      <br />
+    `;
   }
 
-  console.log(`Selected Class: ${selectedClass}`); // Debugging: Check selected class
-
-  if (selectedClass) {
-    filteredEntries = faces.flatMap(face => face.timeEntries
-      .filter(entry => entry.classLabel === selectedClass &&
-        new Date(entry.timeIn).setHours(0, 0, 0, 0) === today.getTime())
-      .map(entry => ({
-        label: face.label,
-        classLabel: entry.classLabel,
-        timeIn: entry.timeIn,
-        timeOut: entry.timeOut
-      }))
-    );
-  }
-console.log('Filtered Entries:', JSON.stringify(filteredEntries, null, 2));
-  const tableHTML = `
-    <table class="table align-middle mb-0 table-dark table-striped">
-      <thead class="bg-light">
-        <tr>
-          <th>Name</th>
-          <th>Class</th>
-          <th>Time In</th>
-          <th>Time Out</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${filteredEntries.map(entry => `
-            <tr>
-              <td>${entry.label}</td>
-              <td>${entry.classLabel}</td>
-              <td>${entry.timeIn ? new Date(entry.timeIn).toLocaleTimeString() : 'N/A'}</td>
-              <td>${entry.timeOut ? new Date(entry.timeOut).toLocaleTimeString() : 'N/A'}</td>
-            </tr>`).join('')}
-      </tbody>
-    </table>
-  `;
-console.log('Generated Table HTML:', tableHTML);
+  console.log('Generated Table HTML:', tableHTML);
   attendanceContainer.innerHTML = tableHTML;
 }
-
 
 function updateClock() {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString();
@@ -132,7 +124,7 @@ function autoSelectClass() {
   const currentHour = now.getHours();
   const currentMinutes = now.getMinutes();
 
-  if ((currentHour >= 6 && currentHour <= 11) || (currentHour === 11 && currentMinutes <= 59)) {
+  if ((currentHour >= 1 && currentHour <= 11) || (currentHour === 11 && currentMinutes <= 59)) {
     selectedClass = 'Khmer Class (Full-Time)';
   } else if (currentHour >= 12 && currentHour <= 16 || (currentHour === 16 && currentMinutes <= 49)) {
     selectedClass = 'English Class (Full-Time)';
