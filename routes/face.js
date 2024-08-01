@@ -34,7 +34,6 @@ router.get('/api/get-faces', async (req, res) => {
   }
 });
 
-
 router.post('/api/detect-qr', async (req, res) => {
 
   console.log('Request body:', req.body);
@@ -54,14 +53,14 @@ router.post('/api/detect-qr', async (req, res) => {
     }
 
     const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
-    console.log('Client time:', clientMoment.format());
+    console.log('Client time:', clientMoment.format()); // Log client time for debugging
 
     if (action === 'timeIn') {
       const existingEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel && !entry.timeOut
       );
 
-      console.log('Existing entry for timeIn:', existingEntry);
+      console.log('Existing entry for timeIn:', existingEntry); // Log existing time-in entry
 
       if (existingEntry) {
         return res.status(400).send('Already timed in for this class');
@@ -74,7 +73,7 @@ router.post('/api/detect-qr', async (req, res) => {
         entry => entry.classLabel === classLabel && !entry.timeOut
       );
 
-      console.log('Last entry for timeOut:', lastEntry);
+      console.log('Last entry for timeOut:', lastEntry); // Log last time-out entry
 
       if (lastEntry) {
         lastEntry.timeOut = clientMoment.toDate();

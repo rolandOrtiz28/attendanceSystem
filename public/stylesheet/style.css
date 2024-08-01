@@ -204,3 +204,8 @@ font-size: 12px;
 .table-striped tbody tr:nth-of-type(odd) {
     background-color: #f9f9f9;
 }
+
+#qr-reader {
+    transform: scaleX(-1);
+    /* Mirror the camera feed horizontally */
+}

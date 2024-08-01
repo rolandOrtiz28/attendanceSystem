@@ -4,7 +4,6 @@ const qrReader = new Html5Qrcode("qr-reader");
 let detectedQR = null;
 let selectedAction = 'timeIn'; // Default value
 let selectedClass = 'Khmer Class (Full-Time)'; // Default value
-
 // QR Code scanning configuration
 qrReader.start(
   { facingMode: "environment" }, // Use rear camera
@@ -22,6 +21,14 @@ qrReader.start(
   }
 );
 
+// Apply mirror effect using JavaScript
+document.addEventListener('DOMContentLoaded', () => {
+  const qrReaderElement = document.getElementById("qr-reader");
+  if (qrReaderElement) {
+    qrReaderElement.style.transform = 'scaleX(-1)';
+  }
+});
+
 function processQRDetection() {
   if (detectedQR) {
     saveQRDetection(detectedQR, selectedAction, selectedClass);
@@ -31,7 +38,7 @@ function processQRDetection() {
 }
 
 async function saveQRDetection(qrCode, action, classLabel) {
-  const clientTime = new Date();
+  const clientTime = new Date().toISOString(); // Ensure time is in ISO format
   try {
     const response = await fetch('/api/detect-qr', {
       method: 'POST',
