@@ -4,6 +4,7 @@
 
     <div class="container-fluid">
         <a href="/attendance/monthly?month=<%= month %>" class="btn btn-sm btn-primary">Back to Monthly Records</a>
+        <a href="/attendance/update/<%= label %>" class="btn btn-sm btn-warning ">Update Records</a>
         <h2 class="text-center">
             Personal Attendance Records for <%= label %> - <%= new Date(month).toLocaleDateString([], { year: 'numeric'
                     , month: 'long' }) %>
@@ -36,10 +37,15 @@
                                         </p>
                                     </td>
                                     <td>
-                                        <p class="time-out" data-time="<%= new Date(record.timeOut).toISOString() %>">
-                                            <%= new Date(record.timeOut).toLocaleTimeString([], { hour: '2-digit' ,
-                                                minute: '2-digit' }) %>
-                                        </p>
+                                        <% if (record.timeOut) { %>
+                                            <p class="time-out"
+                                                data-time="<%= new Date(record.timeOut).toISOString() %>">
+                                                <%= new Date(record.timeOut).toLocaleTimeString([], { hour: '2-digit' ,
+                                                    minute: '2-digit' }) %>
+                                            </p>
+                                            <% } else { %>
+                                                <p class="time-out">Not Checked Out</p>
+                                                <% } %>
                                     </td>
                                 </tr>
                                 <% }) %>
@@ -58,8 +64,10 @@
             const timeElements = document.querySelectorAll('.time-in, .time-out');
             timeElements.forEach(el => {
                 const timeString = el.getAttribute('data-time');
-                const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
-                el.textContent = localTime;
+                if (timeString) {
+                    const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
+                    el.textContent = localTime;
+                }
             });
         });
     </script>

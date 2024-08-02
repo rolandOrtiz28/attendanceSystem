@@ -34,6 +34,15 @@ router.get('/api/get-faces', async (req, res) => {
   }
 });
 
+router.post('/delete', async (req, res) => {
+  try {
+    await Face.deleteMany({});
+    res.redirect('/attendance');
+  } catch (error) {
+    console.error('Error deleting faces:', error);
+    res.status(500).send('Error deleting faces');
+  }
+});
 
 router.post('/api/detect-qr', async (req, res) => {
   console.log('Request body:', req.body);
@@ -239,48 +248,56 @@ router.get('/attendance/personal/:label', async (req, res) => {
 });
 
 
-router.post('/attendance/personal/:label/delete', async (req, res) => {
+router.get('/attendance/update/:label', async (req, res) => {
   try {
     const { label } = req.params;
-    const { timeIn } = req.body;
-
-    console.log('Received timeIn:', timeIn);
-
-    // Convert timeIn to Date object
-    const timeInDate = new Date(timeIn);
-    console.log('Converted timeInDate:', timeInDate);
-
-    if (isNaN(timeInDate.getTime())) {
-      console.error('Invalid timeIn date:', timeIn);
-      return res.status(400).send('Invalid timeIn value');
-    }
-
-    // Find the staff member
     const face = await Face.findOne({ label });
 
     if (!face) {
-      return res.status(404).send('Staff member not found');
+      return res.status(404).send('Staff not found');
     }
 
-    // Log the timeEntries before deletion
-    console.log('Current timeEntries:', face.timeEntries);
-
-    // Remove the specific time entry by comparing the exact date and time
-    face.timeEntries = face.timeEntries.filter(entry => new Date(entry.timeIn).getTime() !== timeInDate.getTime());
-
-    // Log the timeEntries after deletion
-    console.log('Updated timeEntries:', face.timeEntries);
-
-    // Save the updated document
-    await face.save();
-
-    // Redirect back to the personal record page
-    res.redirect(`/attendance/personal/${encodeURIComponent(label)}?month=${req.query.month}`);
+    res.render('./attendance/update', { face });
   } catch (error) {
-    console.error('Error deleting time entry:', error);
-    res.status(500).send('Error deleting time entry');
+    console.error('Error retrieving staff data:', error);
+    res.status(500).send('Error retrieving staff data');
   }
 });
 
+router.post('/attendance/update/:label', async (req, res) => {
+  try {
+    const { label } = req.params;
+    const { timeIn, timeOut, classLabel } = req.body;
+
+    const face = await Face.findOne({ label });
+
+    if (!face) {
+      return res.status(404).send('Staff not found');
+    }
+
+    // Find the time entry to update
+    const entry = face.timeEntries.find(entry => entry.classLabel === classLabel && (!entry.timeOut || entry.timeOut === null));
+
+    if (entry) {
+      // Update existing entry
+      if (timeIn) entry.timeIn = new Date(timeIn);
+      if (timeOut) entry.timeOut = new Date(timeOut);
+      await face.save();
+      res.redirect(`/attendance/personal/${label}?month=${moment(entry.timeIn).format('YYYY-MM')}`);
+    } else {
+      // Create a new entry if none exists
+      face.timeEntries.push({
+        timeIn: new Date(timeIn),
+        timeOut: timeOut ? new Date(timeOut) : null,
+        classLabel
+      });
+      await face.save();
+      res.redirect(`/attendance/personal/${label}?month=${moment(new Date(timeIn)).format('YYYY-MM')}`);
+    }
+  } catch (error) {
+    console.error('Error updating staff data:', error);
+    res.status(500).send('Error updating staff data');
+  }
+});
 
 module.exports = router

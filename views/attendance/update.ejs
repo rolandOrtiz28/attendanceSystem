@@ -1,0 +1,29 @@
+<% layout('/layouts/boilerplate') -%>
+    <link rel="stylesheet" href="/stylesheet/attendance.css">
+
+    <div class="container">
+        <h1 class="text-center">Update Records for <%= face.label %>
+        </h1>
+        <form action="/attendance/update/<%= face.label %>" method="post">
+            <div class="mb-3">
+                <label for="classLabel" class="form-label">Class</label>
+                <select id="classLabel" name="classLabel" class="form-select">
+                    <option value="Khmer Class (Full-Time)">Khmer Class (Full-Time)</option>
+                    <option value="English Class (Full-Time)">English Class (Full-Time)</option>
+                    <option value="English Class (Part-Time)">English Class (Part-Time)</option>
+                    <option value="Office Hour (Part-Time)">Office Hour (Part-Time)</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="timeIn" class="form-label">Time In</label>
+                <input type="datetime-local" id="timeIn" name="timeIn" class="form-control"
+                    value="<%= face.timeEntries[0] ? new Date(face.timeEntries[0].timeIn).toLocaleTimeString().slice(0, 16) : '' %>">
+            </div>
+            <div class="mb-3">
+                <label for="timeOut" class="form-label">Time Out</label>
+                <input type="datetime-local" id="timeOut" name="timeOut" class="form-control"
+                    value="<%= face.timeEntries[0] && face.timeEntries[0].timeOut ? new Date(face.timeEntries[0].timeOut).toLocaleTimeString().slice(0, 16) : '' %>">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Record</button>
+        </form>
+    </div>

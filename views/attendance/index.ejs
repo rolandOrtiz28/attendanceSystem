@@ -1,103 +1,119 @@
 <% layout('/layouts/boilerplate') -%>
-<link rel="stylesheet" href="/stylesheet/attendance.css">
+  <link rel="stylesheet" href="/stylesheet/attendance.css">
 
-<div class="container">
-  <a href="/generate-qr" class="btn btn-sm btn-primary mb-2">Add new Staff</a>
-  <a href="/attendance/monthly?month=<%= new Date(currentDate).toISOString().slice(0, 7) %>" class="btn btn-sm btn-primary mb-2">View Monthly Attendance</a>
-  <a href="/" class="btn btn-sm btn-primary mb-2">Home</a>
-  <% ['Khmer Class (Full-Time)', 'English Class (Full-Time)', 'English Class (Part-Time)', 'Office Hour (Part-Time)'].forEach(classLabel => { %>
-    <div class="table-container">
-      <h2 class="text-center">
-        <%= classLabel %> - <%= new Date(currentDate).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
-      </h2>
-      <table class="table align-middle mb-0 bg-white" id="<%= classLabel.replace(/\s+/g, '-').replace('(', '').replace(')', '') %>">
-        <thead class="bg-light">
-          <tr>
-            <th>Name</th>
-            <th>Time In</th>
-            <th>Time Out</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (recordsByClass[classLabel].length === 0) { %>
-            <tr>
-              <td colspan="3" class="text-center">No records for <%= classLabel %> today</td>
-            </tr>
-          <% } else { %>
-            <% recordsByClass[classLabel].forEach(record => { %>
-              <tr>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <div>
-                      <p class="fw-bold mb-1">
-                        <%= record.label %>
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <% if (record.timeIn) { %>
-                    <p class="fw-normal mb-1 time-in" data-time="<%= new Date(record.timeIn).toISOString() %>"></p>
-                  <% } else { %>
-                    <p class="fw-normal mb-1">N/A</p>
-                  <% } %>
-                </td>
-                <td>
-                  <% if (record.timeOut) { %>
-                    <p class="fw-normal mb-1 time-out" data-time="<%= new Date(record.timeOut).toISOString() %>"></p>
-                  <% } else { %>
-                    <p class="fw-normal mb-1">N/A</p>
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
-          <% } %>
-        </tbody>
-      </table>
+  <div class="container">
+    <div class="d-flex justify-content-between mb-2">
+      <!-- Buttons on the left -->
+      <div>
+        <a href="/generate-qr" class="btn btn-sm btn-primary mb-2">Add new Staff</a>
+        <a href="/attendance/monthly?month=<%= new Date(currentDate).toISOString().slice(0, 7) %>"
+          class="btn btn-sm btn-primary mb-2">View Monthly Attendance</a>
+        <a href="/" class="btn btn-sm btn-primary mb-2">Home</a>
+      </div>
+
+      <!-- Reset All Records Button on the right -->
+      <form action="/delete" method="post" style="display: inline;">
+        <button type="submit" class="btn btn-danger btn-sm">Reset All Records</button>
+      </form>
     </div>
-  <% }) %>
-  <div class="d-flex justify-content-end mb-2">
-    <button id="download-excel" class="btn btn-success">Download Excel <i class="fas fa-file-excel ms-1"></i></button>
-    
 
+    <% ['Khmer Class (Full-Time)', 'English Class (Full-Time)' , 'English Class (Part-Time)' , 'Office Hour (Part-Time)'
+      ].forEach(classLabel=> { %>
+      <div class="table-container">
+        <h2 class="text-center">
+          <%= classLabel %> - <%= new Date(currentDate).toLocaleDateString([], { weekday: 'long' , year: 'numeric' ,
+              month: 'long' , day: 'numeric' }) %>
+        </h2>
+        <table class="table align-middle mb-0 bg-white"
+          id="<%= classLabel.replace(/\s+/g, '-').replace('(', '').replace(')', '') %>">
+          <thead class="bg-light">
+            <tr>
+              <th>Name</th>
+              <th>Time In</th>
+              <th>Time Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recordsByClass[classLabel].length===0) { %>
+              <tr>
+                <td colspan="3" class="text-center">No records for <%= classLabel %> today</td>
+              </tr>
+              <% } else { %>
+                <% recordsByClass[classLabel].forEach(record=> { %>
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div>
+                          <p class="fw-bold mb-1">
+                            <%= record.label %>
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <% if (record.timeIn) { %>
+                        <p class="fw-normal mb-1 time-in" data-time="<%= new Date(record.timeIn).toISOString() %>"></p>
+                        <% } else { %>
+                          <p class="fw-normal mb-1">N/A</p>
+                          <% } %>
+                    </td>
+                    <td>
+                      <% if (record.timeOut) { %>
+                        <p class="fw-normal mb-1 time-out" data-time="<%= new Date(record.timeOut).toISOString() %>">
+                        </p>
+                        <% } else { %>
+                          <p class="fw-normal mb-1">N/A</p>
+                          <% } %>
+                    </td>
+                  </tr>
+                  <% }) %>
+                    <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% }) %>
+
+        <div class="d-flex justify-content-end mb-2">
+          <button id="download-excel" class="btn btn-success">Download Excel <i
+              class="fas fa-file-excel ms-1"></i></button>
+        </div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.34/moment-timezone-with-data.min.js"></script>
-<script>
-  document.getElementById('download-excel').addEventListener('click', function () {
-    var wb = XLSX.utils.book_new();
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.34/moment-timezone-with-data.min.js"></script>
+  <script>
+    document.getElementById('download-excel').addEventListener('click', function () {
+      var wb = XLSX.utils.book_new();
 
-    ['Khmer Class (Full-Time)', 'English Class (Full-Time)', 'English Class (Part-Time)', 'Office Hour (Part-Time)'].forEach(classLabel => {
-      var ws_data = [['Name', 'Time In', 'Time Out']];
-      var table = document.getElementById(classLabel.replace(/\s+/g, '-').replace('(', '').replace(')', ''));
-      if (table) {
-        var rows = table.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-          var cells = row.cells;
-          if (cells.length >= 3) {
-            var name = cells[0].querySelector('.fw-bold').textContent.trim();
-            var timeIn = cells[1].querySelector('.time-in').getAttribute('data-time');
-            var timeOut = cells[2].querySelector('.time-out').getAttribute('data-time');
-            ws_data.push([name, timeIn, timeOut]);
-          }
-        });
-        var ws = XLSX.utils.aoa_to_sheet(ws_data);
-        XLSX.utils.book_append_sheet(wb, ws, classLabel.replace(/\s+/g, '-'));
-      }
+      ['Khmer Class (Full-Time)', 'English Class (Full-Time)', 'English Class (Part-Time)', 'Office Hour (Part-Time)'].forEach(classLabel => {
+        var ws_data = [['Name', 'Time In', 'Time Out']];
+        var table = document.getElementById(classLabel.replace(/\s+/g, '-').replace('(', '').replace(')', ''));
+        if (table) {
+          var rows = table.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            var cells = row.cells;
+            if (cells.length >= 3) {
+              var name = cells[0].querySelector('.fw-bold').textContent.trim();
+              var timeIn = cells[1].querySelector('.time-in').getAttribute('data-time');
+              var timeOut = cells[2].querySelector('.time-out').getAttribute('data-time');
+              ws_data.push([name, timeIn, timeOut]);
+            }
+          });
+          var ws = XLSX.utils.aoa_to_sheet(ws_data);
+          XLSX.utils.book_append_sheet(wb, ws, classLabel.replace(/\s+/g, '-'));
+        }
+      });
+
+      XLSX.writeFile(wb, 'attendance.xlsx');
     });
 
-    XLSX.writeFile(wb, 'attendance.xlsx');
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const timeElements = document.querySelectorAll('.time-in, .time-out');
-    timeElements.forEach(el => {
-      const timeString = el.getAttribute('data-time');
-      const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
-      el.textContent = localTime;
+    document.addEventListener('DOMContentLoaded', () => {
+      const timeElements = document.querySelectorAll('.time-in, .time-out');
+      timeElements.forEach(el => {
+        const timeString = el.getAttribute('data-time');
+        const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
+        el.textContent = localTime;
+      });
     });
-  });
-</script>
+  </script>
