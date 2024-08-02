@@ -55,19 +55,10 @@ async function saveQRDetection(qrCode, action, classLabel) {
   }
 }
 
-
 function updateAttendanceTable(faces) {
   // Get the current date
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set to the start of the day
-
-  // Define time ranges for class periods
-  const timeRanges = {
-    'Khmer Class (Full-Time)': { start: 1, end: 11, endMinutes: 59 },
-    'Office Hour (Part-Time)': { start: 1, end: 11, endMinutes: 59 },
-    'English Class (Full-Time)': { start: 12, end: 16, endMinutes: 59 },
-    'English Class (Part-Time)': { start: 17, end: 21, endMinutes: 59 }
-  };
 
   // Group entries by class
   const groupedEntries = {};
@@ -119,6 +110,7 @@ function updateAttendanceTable(faces) {
   console.log('Generated Table HTML:', tableHTML);
   attendanceContainer.innerHTML = tableHTML;
 }
+
 
 function updateClock() {
   const now = new Date();
