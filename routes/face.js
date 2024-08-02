@@ -247,7 +247,6 @@ router.get('/attendance/personal/:label', async (req, res) => {
   }
 });
 
-
 router.get('/attendance/update/:label', async (req, res) => {
   try {
     const { label } = req.params;
@@ -257,12 +256,23 @@ router.get('/attendance/update/:label', async (req, res) => {
       return res.status(404).send('Staff not found');
     }
 
+    // Convert time entries to local time (ICT)
+    face.timeEntries.forEach(entry => {
+      if (entry.timeIn) {
+        entry.timeInLocal = new Date(entry.timeIn).toLocaleString('en-TH', { timeZone: 'Asia/Phnom_Penh' });
+      }
+      if (entry.timeOut) {
+        entry.timeOutLocal = new Date(entry.timeOut).toLocaleString('en-TH', { timeZone: 'Asia/Phnom_Penh' });
+      }
+    });
+
     res.render('./attendance/update', { face });
   } catch (error) {
     console.error('Error retrieving staff data:', error);
     res.status(500).send('Error retrieving staff data');
   }
 });
+
 
 router.post('/attendance/update/:label', async (req, res) => {
   try {
