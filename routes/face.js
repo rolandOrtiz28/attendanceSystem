@@ -34,8 +34,8 @@ router.get('/api/get-faces', async (req, res) => {
   }
 });
 
-router.post('/api/detect-qr', async (req, res) => {
 
+router.post('/api/detect-qr', async (req, res) => {
   console.log('Request body:', req.body);
 
   try {
@@ -52,25 +52,36 @@ router.post('/api/detect-qr', async (req, res) => {
       faceRecord = new Face({ label: qrCode, timeEntries: [] });
     }
 
+    // Convert client time to Asia/Phnom_Penh timezone
     const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
     console.log('Client time:', clientMoment.format()); // Log client time for debugging
 
     if (action === 'timeIn') {
+      // Find existing time-in entry for the same class and date
       const existingEntry = faceRecord.timeEntries.find(
-        entry => entry.classLabel === classLabel && !entry.timeOut
+        entry => entry.classLabel === classLabel &&
+                 !entry.timeOut &&
+                 moment(entry.timeIn).isSame(clientMoment, 'day')
       );
 
       console.log('Existing entry for timeIn:', existingEntry); // Log existing time-in entry
 
       if (existingEntry) {
-        return res.status(400).send('Already timed in for this class');
+        return res.status(400).send('Already timed in for this class today');
       }
 
-      faceRecord.timeEntries.push({ timeIn: clientMoment.toDate(), classLabel });
+      faceRecord.timeEntries.push({
+        timeIn: clientMoment.toDate(),
+        classLabel
+      });
+
       console.log('Added timeIn entry:', faceRecord.timeEntries);
     } else if (action === 'timeOut') {
+      // Find existing time-in entry for the same class and date
       const lastEntry = faceRecord.timeEntries.find(
-        entry => entry.classLabel === classLabel && !entry.timeOut
+        entry => entry.classLabel === classLabel &&
+                 !entry.timeOut &&
+                 moment(entry.timeIn).isSame(clientMoment, 'day')
       );
 
       console.log('Last entry for timeOut:', lastEntry); // Log last time-out entry
@@ -78,7 +89,7 @@ router.post('/api/detect-qr', async (req, res) => {
       if (lastEntry) {
         lastEntry.timeOut = clientMoment.toDate();
       } else {
-        return res.status(400).send('No matching time in entry found for time out');
+        return res.status(400).send('No matching time-in entry found for time-out');
       }
 
       console.log('Updated timeOut entry:', faceRecord.timeEntries);

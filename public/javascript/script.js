@@ -55,6 +55,7 @@ async function saveQRDetection(qrCode, action, classLabel) {
   }
 }
 
+
 function updateAttendanceTable(faces) {
   // Get the current date
   const today = new Date();
@@ -120,10 +121,15 @@ function updateAttendanceTable(faces) {
 }
 
 function updateClock() {
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+  const now = new Date();
+  const dateString = now.toLocaleDateString(); // Format the date
+  const timeString = now.toLocaleTimeString(); // Format the time
+
+  document.getElementById('date').textContent = dateString;
+  document.getElementById('clock').textContent = timeString;
 }
 
-setInterval(updateClock, 1000);
+setInterval(updateClock, 1000); // Update both date and time every second
 
 // Function to auto-select the class based on the current time
 function autoSelectClass() {
