@@ -1,10 +1,10 @@
 <% layout('/layouts/boilerplate') -%>
     <link rel="stylesheet" href="/stylesheet/attendance.css">
-    <link rel="stylesheet" href="/stylesheet/personal.css">
+
 
     <div class="container-fluid">
         <a href="/attendance/monthly?month=<%= month %>" class="btn btn-sm btn-primary">Back to Monthly Records</a>
-        <a href="/attendance/update/<%= label %>" class="btn btn-sm btn-warning ">Update Records</a>
+
         <h2 class="text-center">
             Personal Attendance Records for <%= label %> - <%= new Date(month).toLocaleDateString([], { year: 'numeric'
                     , month: 'long' }) %>
@@ -22,6 +22,7 @@
                                 <th>Date</th>
                                 <th>Time In</th>
                                 <th>Time Out</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -47,6 +48,11 @@
                                                 <p class="time-out">Not Checked Out</p>
                                                 <% } %>
                                     </td>
+<td>
+    <button class="btn btn-warning btn-sm edit-time-entry" data-timein="<%= new Date(record.timeIn).toISOString() %>"
+        data-timeout="<%= record.timeOut ? new Date(record.timeOut).toISOString() : '' %>"
+        data-date="<%= new Date(record.timeIn).toISOString().split('T')[0] %>" data-class="<%= classLabel %>">Edit</button>
+</td>
                                 </tr>
                                 <% }) %>
                         </tbody>
@@ -55,6 +61,38 @@
                 <% } %>
                     <% }) %>
     </div>
+
+
+
+
+
+<!-- Edit Time Entry Modal -->
+<div class="modal fade" id="editTimeEntryModal" tabindex="-1" aria-labelledby="editTimeEntryModalLabel"
+    aria-hidden="true" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTimeEntryModalLabel">Edit Time Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTimeEntryForm">
+                    <input type="hidden" name="classLabel" id="classLabel">
+                    <input type="hidden" name="date" id="date">
+                    <div class="mb-3">
+                        <label for="timeIn" class="form-label">Time In</label>
+                        <input type="datetime-local" class="form-control" name="timeIn" id="timeIn">
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeOut" class="form-label">Time Out</label>
+                        <input type="datetime-local" class="form-control" name="timeOut" id="timeOut">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script
@@ -71,3 +109,66 @@
             });
         });
     </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Attach event listeners to all "Edit" buttons
+        document.querySelectorAll('.edit-time-entry').forEach(button => {
+            button.addEventListener('click', () => {
+                const timeIn = button.getAttribute('data-timein');
+                const timeOut = button.getAttribute('data-timeout');
+                const date = button.getAttribute('data-date');
+                const classLabel = button.getAttribute('data-class');
+
+                console.log('timeIn:', timeIn);
+                console.log('timeOut:', timeOut);
+                console.log('date:', date);
+                console.log('classLabel:', classLabel);
+
+                // Format date and time for datetime-local input
+                const formatDateTime = (datetime) => {
+                    if (!datetime) return '';
+                    return datetime.split('T').slice(0, 2).join('T').substring(0, 16);
+                };
+
+                document.getElementById('timeIn').value = formatDateTime(timeIn);
+                document.getElementById('timeOut').value = formatDateTime(timeOut);
+                document.getElementById('date').value = date;
+                document.getElementById('classLabel').value = classLabel;
+
+                const modal = new bootstrap.Modal(document.getElementById('editTimeEntryModal'));
+                modal.show();
+            });
+        });
+
+        // Handle form submission
+        document.getElementById('editTimeEntryForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = {
+                label: '<%= label %>', // Ensure this is correctly set in your template
+                date: formData.get('date'),
+                timeIn: formData.get('timeIn'),
+                timeOut: formData.get('timeOut'),
+                classLabel: formData.get('classLabel')
+            };
+
+            try {
+                const response = await fetch('/api/update-time-entry', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    location.reload(); // Reload to reflect changes
+                } else {
+                    alert('Error updating time entry');
+                }
+            } catch (error) {
+                console.error('Error updating time entry:', error);
+                alert('Error updating time entry');
+            }
+        });
+    });
+</script>

@@ -44,6 +44,7 @@ router.post('/delete', async (req, res) => {
   }
 });
 
+
 router.post('/api/detect-qr', async (req, res) => {
   console.log('Request body:', req.body);
 
@@ -65,12 +66,16 @@ router.post('/api/detect-qr', async (req, res) => {
     const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
     console.log('Client time:', clientMoment.format()); // Log client time for debugging
 
+    // Determine the date for the entry
+    const cutOffTime = moment(clientMoment).startOf('day').add(23, 'hours').add(59, 'minutes'); // 11:59 PM
+    let recordDate = clientMoment.isBefore(cutOffTime) ? clientMoment.startOf('day') : clientMoment.startOf('day').add(1, 'day');
+
     if (action === 'timeIn') {
       // Find existing time-in entry for the same class and date
       const existingEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel &&
                  !entry.timeOut &&
-                 moment(entry.timeIn).isSame(clientMoment, 'day')
+                 moment(entry.timeIn).isSame(recordDate, 'day')
       );
 
       console.log('Existing entry for timeIn:', existingEntry); // Log existing time-in entry
@@ -90,7 +95,7 @@ router.post('/api/detect-qr', async (req, res) => {
       const lastEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel &&
                  !entry.timeOut &&
-                 moment(entry.timeIn).isSame(clientMoment, 'day')
+                 moment(entry.timeIn).isSame(recordDate, 'day')
       );
 
       console.log('Last entry for timeOut:', lastEntry); // Log last time-out entry
@@ -159,7 +164,8 @@ router.get('/attendance', async (req, res) => {
 });
 
 
-// Route to display monthly attendance
+
+
 router.get('/attendance/monthly', async (req, res) => {
   try {
     const month = req.query.month || moment().format('YYYY-MM'); // Default to the current month if not provided
@@ -182,12 +188,13 @@ router.get('/attendance/monthly', async (req, res) => {
     faces.forEach(face => {
       face.timeEntries.forEach(entry => {
         const timeIn = moment(entry.timeIn).tz('UTC').toDate(); // Convert to UTC
+        const timeOut = entry.timeOut ? moment(entry.timeOut).tz('UTC').toDate() : null; // Convert to UTC
         if (timeIn >= startOfMonth && timeIn < endOfMonth) {
           if (entry.classLabel) {
             recordsByClass[entry.classLabel].push({
               label: face.label,
               timeIn: timeIn,
-              timeOut: moment(entry.timeOut).tz('UTC').toDate() // Convert to UTC
+              timeOut: timeOut // May be null
             });
           }
         }
@@ -247,66 +254,42 @@ router.get('/attendance/personal/:label', async (req, res) => {
   }
 });
 
-router.get('/attendance/update/:label', async (req, res) => {
+
+router.post('/api/update-time-entry', async (req, res) => {
   try {
-    const { label } = req.params;
-    const face = await Face.findOne({ label });
+    const { label, date, timeIn, timeOut, classLabel } = req.body;
 
-    if (!face) {
-      return res.status(404).send('Staff not found');
+    // Convert inputs to the appropriate formats
+    const timeInDate = new Date(timeIn);
+    const timeOutDate = timeOut ? new Date(timeOut) : null;
+    const recordDate = new Date(date);
+
+    // Find the face record by label
+    const faceRecord = await Face.findOne({ label });
+
+    if (!faceRecord) {
+      return res.status(404).send('Face record not found');
     }
 
-    // Convert time entries to local time (ICT)
-    face.timeEntries.forEach(entry => {
-      if (entry.timeIn) {
-        entry.timeInLocal = new Date(entry.timeIn).toLocaleString('en-TH', { timeZone: 'Asia/Phnom_Penh' });
-      }
-      if (entry.timeOut) {
-        entry.timeOutLocal = new Date(entry.timeOut).toLocaleString('en-TH', { timeZone: 'Asia/Phnom_Penh' });
-      }
-    });
+    // Find the specific time entry to update
+    const entry = faceRecord.timeEntries.find(
+      e => e.classLabel === classLabel &&
+           moment(e.timeIn).isSame(recordDate, 'day')
+    );
 
-    res.render('./attendance/update', { face });
+    if (!entry) {
+      return res.status(404).send('Time entry not found');
+    }
+
+    // Update timeIn and/or timeOut
+    entry.timeIn = timeInDate;
+    entry.timeOut = timeOutDate;
+
+    await faceRecord.save();
+    res.status(200).send('Time entry updated successfully');
   } catch (error) {
-    console.error('Error retrieving staff data:', error);
-    res.status(500).send('Error retrieving staff data');
-  }
-});
-
-
-router.post('/attendance/update/:label', async (req, res) => {
-  try {
-    const { label } = req.params;
-    const { timeIn, timeOut, classLabel } = req.body;
-
-    const face = await Face.findOne({ label });
-
-    if (!face) {
-      return res.status(404).send('Staff not found');
-    }
-
-    // Find the time entry to update
-    const entry = face.timeEntries.find(entry => entry.classLabel === classLabel && (!entry.timeOut || entry.timeOut === null));
-
-    if (entry) {
-      // Update existing entry
-      if (timeIn) entry.timeIn = new Date(timeIn);
-      if (timeOut) entry.timeOut = new Date(timeOut);
-      await face.save();
-      res.redirect(`/attendance/personal/${label}?month=${moment(entry.timeIn).format('YYYY-MM')}`);
-    } else {
-      // Create a new entry if none exists
-      face.timeEntries.push({
-        timeIn: new Date(timeIn),
-        timeOut: timeOut ? new Date(timeOut) : null,
-        classLabel
-      });
-      await face.save();
-      res.redirect(`/attendance/personal/${label}?month=${moment(new Date(timeIn)).format('YYYY-MM')}`);
-    }
-  } catch (error) {
-    console.error('Error updating staff data:', error);
-    res.status(500).send('Error updating staff data');
+    console.error('Error updating time entry:', error);
+    res.status(500).send('Error updating time entry');
   }
 });
 

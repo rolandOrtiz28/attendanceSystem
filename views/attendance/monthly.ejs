@@ -46,22 +46,31 @@
                     Date(month).getMonth() + 1, 0).getDate(); dayOfMonth++) { %>
                     <td>
                       <% if (dayOfMonth===day) { %>
-                        <p class="time-in" data-time="<%= new Date(record.timeIn).toISOString() %>">
-                          <%= new Date(record.timeIn).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit' }) %>
-                        </p>
-                        <% } else { %>
-                          N/A
-                          <% } %>
+                        <% if (record.timeIn) { %>
+                          <p class="time-in" data-time="<%= new Date(record.timeIn).toISOString() %>">
+                            <%= new Date(record.timeIn).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit' })
+                              %>
+                          </p>
+                          <% } else { %>
+                            N/A
+                            <% } %>
+                              <% } else { %>
+                                N/A
+                                <% } %>
                     </td>
                     <td>
                       <% if (dayOfMonth===day) { %>
-                        <p class="time-out" data-time="<%= new Date(record.timeOut).toISOString() %>">
-                          <%= new Date(record.timeOut).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit' })
-                            %>
-                        </p>
-                        <% } else { %>
-                          N/A
-                          <% } %>
+                        <% if (record.timeOut) { %>
+                          <p class="time-out" data-time="<%= new Date(record.timeOut).toISOString() %>">
+                            <%= new Date(record.timeOut).toLocaleTimeString([], { hour: '2-digit' , minute: '2-digit' })
+                              %>
+                          </p>
+                          <% } else { %>
+                            N/A
+                            <% } %>
+                              <% } else { %>
+                                N/A
+                                <% } %>
                     </td>
                     <% } %>
                 </tr>
@@ -79,8 +88,10 @@
       const timeElements = document.querySelectorAll('.time-in, .time-out');
       timeElements.forEach(el => {
         const timeString = el.getAttribute('data-time');
-        const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
-        el.textContent = localTime;
+        if (timeString) {
+          const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
+          el.textContent = localTime;
+        }
       });
     });
   </script>
