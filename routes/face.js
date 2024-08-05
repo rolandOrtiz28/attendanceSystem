@@ -45,6 +45,7 @@ router.post('/delete', async (req, res) => {
 });
 
 
+
 router.post('/api/detect-qr', async (req, res) => {
   console.log('Request body:', req.body);
 
@@ -66,16 +67,12 @@ router.post('/api/detect-qr', async (req, res) => {
     const clientMoment = moment(clientTime).tz('Asia/Phnom_Penh');
     console.log('Client time:', clientMoment.format()); // Log client time for debugging
 
-    // Determine the date for the entry
-    const cutOffTime = moment(clientMoment).startOf('day').add(23, 'hours').add(59, 'minutes'); // 11:59 PM
-    let recordDate = clientMoment.isBefore(cutOffTime) ? clientMoment.startOf('day') : clientMoment.startOf('day').add(1, 'day');
-
     if (action === 'timeIn') {
       // Find existing time-in entry for the same class and date
       const existingEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel &&
                  !entry.timeOut &&
-                 moment(entry.timeIn).isSame(recordDate, 'day')
+                 moment(entry.timeIn).isSame(clientMoment, 'day')
       );
 
       console.log('Existing entry for timeIn:', existingEntry); // Log existing time-in entry
@@ -95,7 +92,7 @@ router.post('/api/detect-qr', async (req, res) => {
       const lastEntry = faceRecord.timeEntries.find(
         entry => entry.classLabel === classLabel &&
                  !entry.timeOut &&
-                 moment(entry.timeIn).isSame(recordDate, 'day')
+                 moment(entry.timeIn).isSame(clientMoment, 'day')
       );
 
       console.log('Last entry for timeOut:', lastEntry); // Log last time-out entry
@@ -117,6 +114,7 @@ router.post('/api/detect-qr', async (req, res) => {
     res.status(500).send('Error saving QR data');
   }
 });
+
 
 router.get('/attendance', async (req, res) => {
   try {

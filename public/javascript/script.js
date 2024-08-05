@@ -56,14 +56,17 @@ async function saveQRDetection(qrCode, action, classLabel) {
 }
 
 function updateAttendanceTable(faces) {
-  const today = moment().startOf('day'); // Start of the current day
-  const tomorrow = today.clone().add(1, 'day'); // Start of the next day
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to the start of the day
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1); // Set to the start of the next day
 
   // Group entries by class
   const groupedEntries = {};
   faces.forEach(face => {
     face.timeEntries.forEach(entry => {
-      const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh');
+      const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh').toDate(); // Convert to local timezone
       if (timeIn >= today && timeIn < tomorrow) {
         const classLabel = entry.classLabel;
         if (!groupedEntries[classLabel]) {
@@ -71,9 +74,9 @@ function updateAttendanceTable(faces) {
         }
         groupedEntries[classLabel].push({
           label: face.label,
-          timeIn: entry.timeIn ? timeIn.format('hh:mm:ss A') : 'N/A',
-          timeOut: entry.timeOut ? moment(entry.timeOut).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A',
-          timeInDate: entry.timeIn ? timeIn.format('M/D/YYYY') : 'N/A'
+          timeIn: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A', // Format time in local timezone
+          timeOut: entry.timeOut ? moment(entry.timeOut).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A', // Format time out in local timezone
+          timeInDate: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('M/D/YYYY') : 'N/A' // Format date in local timezone
         });
       }
     });
@@ -96,13 +99,14 @@ function updateAttendanceTable(faces) {
         </thead>
         <tbody>
           ${entries.map(entry => `
-              <tr>
-                <td>${entry.label}</td>
-                <td>${classLabel}</td>
-                <td>${entry.timeIn}</td>
-                <td>${entry.timeOut}</td>
-                <td>${entry.timeInDate}</td>
-              </tr>`).join('')}
+            <tr>
+              <td>${entry.label}</td>
+              <td>${classLabel}</td>
+              <td>${entry.timeIn}</td>
+              <td>${entry.timeOut}</td>
+              <td>${entry.timeInDate}</td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
       <br />
@@ -112,7 +116,6 @@ function updateAttendanceTable(faces) {
   console.log('Generated Table HTML:', tableHTML);
   attendanceContainer.innerHTML = tableHTML;
 }
-
 
 function updateClock() {
   const now = new Date();
