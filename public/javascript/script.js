@@ -38,12 +38,11 @@ function processQRDetection() {
 }
 
 async function saveQRDetection(qrCode, action, classLabel) {
-  const clientTime = new Date().toISOString(); // Ensure time is in ISO format
   try {
     const response = await fetch('/api/detect-qr', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ qrCode, action, clientTime, classLabel }),
+      body: JSON.stringify({ qrCode, action, classLabel }),
     });
 
     if (!response.ok) {
@@ -56,11 +55,8 @@ async function saveQRDetection(qrCode, action, classLabel) {
 }
 
 function updateAttendanceTable(faces) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set to the start of the day
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1); // Set to the start of the next day
+  const today = moment().tz('Asia/Phnom_Penh').startOf('day').toDate();
+  const tomorrow = moment(today).add(1, 'day').toDate();
 
   // Group entries by class
   const groupedEntries = {};
