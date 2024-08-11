@@ -4,6 +4,7 @@ const qrReader = new Html5Qrcode("qr-reader");
 let detectedQR = null;
 let selectedAction = 'timeIn'; // Default value
 let selectedClass = 'Khmer Class (Full-Time)'; // Default value
+
 // QR Code scanning configuration
 qrReader.start(
   { facingMode: "environment" }, // Use rear camera
