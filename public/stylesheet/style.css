@@ -1,13 +1,11 @@
 .container-fluid {
     display: flex;
     flex-wrap: wrap;
-
     padding: 2rem;
     border-radius: 10px;
     background-color: #272727;
     align-items: center; /* Center items vertically */
     justify-content: center; /* Center items horizontally */
-
 }
 
 .video-container,
@@ -125,108 +123,36 @@ canvas {
     font-size: 100px;
     font-family: Orbitron;
     letter-spacing: 7px;
+    text-shadow: 1px 1px 2px #333;
+}
+
+.success-message {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745; /* Green background for success */
+    color: white; /* White text color */
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.success-message.fade-out {
+    opacity: 0;
+    transition: opacity 1s ease-out;
 }
 
 .btn-group button.active {
     background-color: #007bff; /* Active button background color */
     color: white; /* Active button text color */
     border: 1px solid #007bff; /* Active button border color */
-  }
-
-  .btn-group button {
-    border-radius: 10px; /* Remove button border radius for a flat look */
-    margin: 0; /* Remove default margin */
-    padding: 10px 20px; /* Adjust button padding */
-  }
-
-.btn-group .btn-class{
-font-size: 12px;
 }
 
-.table-container {
-    width: 100%;
-    max-width: 800px;
-    max-height: 500px;
-    /* Adjust height as needed */
-    overflow-y: auto;
-    /* Enable vertical scrolling */
-    border: 1px solid #ddd;
-    /* Optional: Add a border for better visibility */
-    border-radius: 8px;
-    /* Optional: Add rounded corners */
-    background-color: #fff;
-    /* Optional: Background color for better readability */
-    scrollbar-width: thin;
-    /* For Firefox */
-    scrollbar-color: #6e6e6e #e0e0e0;
-    /* For Firefox */
+.btn-class.active {
+    background-color: #007bff; /* Active class button background color */
+    color: white; /* Active class button text color */
+    border: 1px solid #007bff; /* Active class button border color */
 }
-
-/* WebKit Browsers */
-.table-container::-webkit-scrollbar {
-    width: 12px;
-    /* Width of the scrollbar */
-}
-
-.table-container::-webkit-scrollbar-track {
-    background: #e0e0e0;
-    /* Color of the track (part the thumb moves along) */
-    border-radius: 8px;
-    /* Rounded corners for the track */
-}
-
-.table-container::-webkit-scrollbar-thumb {
-    background: #007bff;
-    /* Color of the scrollbar thumb */
-    border-radius: 8px;
-    /* Rounded corners for the thumb */
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-    background: #0056b3;
-    /* Darker color when hovering over the thumb */
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 10px;
-    text-align: left;
-}
-
-.table th {
-    background-color: #f2f2f2;
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-    background-color: #f9f9f9;
-}
-
-#qr-reader {
-    transform: scaleX(-1);
-    /* Mirror the camera feed horizontally */
-}
-
-
-.success-message {
-    display: none;
-    position: fixed;
-    top: 10px;
-    left: 50%;
-
-    transform: translateX(-50%);
-    background-color: #4CAF50; /* Green background for success */
-    color: white;
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-  }
-  
-  .fade-out {
-    opacity: 0;
-    transition: opacity 1s ease-out;
-  }
-  

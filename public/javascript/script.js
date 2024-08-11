@@ -2,7 +2,7 @@ const attendanceContainer = document.getElementById("attendance-container");
 const qrReader = new Html5Qrcode("qr-reader");
 let detectedQR = null;
 let selectedAction = 'timeIn'; // Default value
-let selectedClass = 'Khmer Class (Full-Time)'; // Default value
+let selectedClass = 'auto'; // Default value as auto
 
 // Initialize QR code reader
 qrReader.start(
@@ -58,8 +58,8 @@ async function saveQRDetection(qrCode, action, classLabel) {
     const responseText = await response.text(); // Read as text
     console.log('Server response:', responseText);
 
-    // Display success message
-    showSuccessMessage(`${qrCode} has successfully ${action}ed`);
+    // Display success message with class information
+    showSuccessMessage(`${qrCode} has successfully ${action}ed`, classLabel);
     
     // Fetch updated attendance data
     fetchAttendanceData();
@@ -67,10 +67,9 @@ async function saveQRDetection(qrCode, action, classLabel) {
     console.error(`Error sending QR detection data to server: ${error}`);
   }
 }
-
-function showSuccessMessage(message) {
+function showSuccessMessage(message, classLabel) {
   const successMessageElement = document.getElementById('success-message');
-  successMessageElement.textContent = message;
+  successMessageElement.textContent = `${message} for ${classLabel}`;
   successMessageElement.style.display = 'block';
 
   // Remove the fade-out class after 2 seconds
@@ -83,7 +82,6 @@ function showSuccessMessage(message) {
     }, 1000); // Duration of the fade-out effect
   }, 2000); // Duration to display the message
 }
-
 async function fetchAttendanceData() {
   try {
     const response = await fetch('/api/get-faces');
@@ -115,16 +113,20 @@ function autoSelectClass() {
   const currentHour = now.getHours();
   const currentMinutes = now.getMinutes();
 
-  if ((currentHour >= 1 && currentHour <= 11) || (currentHour === 11 && currentMinutes <= 59)) {
-    selectedClass = 'Khmer Class (Full-Time)';
-  } else if (currentHour >= 12 && currentHour <= 16 || (currentHour === 16 && currentMinutes <= 49)) {
-    selectedClass = 'English Class (Full-Time)';
-  } else if (currentHour >= 17 && currentHour <= 21 || (currentHour === 21 && currentMinutes <= 59)) {
-    selectedClass = 'English Class (Part-Time)';
-  } else {
-    selectedClass = 'Khmer Class (Full-Time)';
+  // Only auto-select if no class is selected manually
+  if (selectedClass === 'auto') {
+    if ((currentHour >= 1 && currentHour <= 11) || (currentHour === 11 && currentMinutes <= 59)) {
+      selectedClass = 'Khmer Class (Full-Time)';
+    } else if (currentHour >= 12 && currentHour <= 16 || (currentHour === 16 && currentMinutes <= 49)) {
+      selectedClass = 'English Class (Full-Time)';
+    } else if (currentHour >= 17 && currentHour <= 21 || (currentHour === 21 && currentMinutes <= 59)) {
+      selectedClass = 'English Class (Part-Time)';
+    } else {
+      selectedClass = 'Khmer Class (Full-Time)';
+    }
   }
 
+  // Update button states
   document.querySelectorAll('.btn-class').forEach(button => {
     button.classList.remove('active');
     if (button.getAttribute('data-class') === selectedClass) {
@@ -135,6 +137,7 @@ function autoSelectClass() {
   console.log(`Auto-selected Class: ${selectedClass}`);
 }
 
+// Initialize auto-class selection
 autoSelectClass();
 setInterval(autoSelectClass, 60000);
 
@@ -142,6 +145,20 @@ setInterval(autoSelectClass, 60000);
 document.querySelectorAll('.btn[data-action]').forEach(button => {
   button.addEventListener('click', (event) => {
     selectedAction = event.target.getAttribute('data-action');
+    // Update button states
+    document.querySelectorAll('.btn[data-action]').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
     console.log(`Selected action: ${selectedAction}`);
+  });
+});
+
+document.querySelectorAll('.btn-class').forEach(button => {
+  button.addEventListener('click', (event) => {
+    selectedClass = event.target.getAttribute('data-class');
+    console.log(`Selected class: ${selectedClass}`);
+    // Call autoSelectClass to ensure the UI reflects the selected class
+    autoSelectClass();
   });
 });
