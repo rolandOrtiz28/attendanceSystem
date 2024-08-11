@@ -1,16 +1,14 @@
-// Ensure attendanceContainer is defined
 const attendanceContainer = document.getElementById("attendance-container");
 const qrReader = new Html5Qrcode("qr-reader");
 let detectedQR = null;
 let selectedAction = 'timeIn'; // Default value
 let selectedClass = 'Khmer Class (Full-Time)'; // Default value
 
-// QR Code scanning configuration
 qrReader.start(
   { facingMode: "environment" }, // Use rear camera
   {
-    fps: 10,    // Frame-per-second for the scanning
-    qrbox: { width: 250, height: 250 }  // Set the QR box size
+    fps: 15,    // Increase FPS to improve scanning performance
+    qrbox: { width: 300, height: 300 }  // Adjust QR box size
   },
   qrCodeMessage => {
     detectedQR = qrCodeMessage;
@@ -22,7 +20,6 @@ qrReader.start(
   }
 );
 
-// Apply mirror effect using JavaScript
 document.addEventListener('DOMContentLoaded', () => {
   const qrReaderElement = document.getElementById("qr-reader");
   if (qrReaderElement) {
@@ -30,11 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+let lastScannedQR = null;
+let lastScannedTime = 0;
+const COOLDOWN_PERIOD = 3000; // 3 seconds cooldown
+
 function processQRDetection() {
-  if (detectedQR) {
+  const currentTime = Date.now();
+
+  if (detectedQR && (lastScannedQR !== detectedQR || (currentTime - lastScannedTime) > COOLDOWN_PERIOD)) {
+    lastScannedQR = detectedQR;
+    lastScannedTime = currentTime;
     saveQRDetection(detectedQR, selectedAction, selectedClass);
   } else {
-    console.log('No QR code detected to process.');
+    console.log('QR code already scanned recently, skipping.');
   }
 }
 
@@ -46,24 +51,44 @@ async function saveQRDetection(qrCode, action, classLabel) {
       body: JSON.stringify({ qrCode, action, classLabel }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Error: ${errorText}`);
-    }
+    const responseText = await response.text(); // Read as text
+    console.log('Server response:', responseText);
+
+    // Since response is plain text, just log and skip JSON parsing
+    fetchAttendanceData();
   } catch (error) {
     console.error(`Error sending QR detection data to server: ${error}`);
   }
 }
 
+
+async function fetchAttendanceData() {
+  try {
+    const response = await fetch('/api/get-faces');
+    if (response.ok) {
+      const faces = await response.json();
+      console.log('Fetched faces:', faces);
+      updateAttendanceTable(faces);
+    } else {
+      console.error('Failed to fetch attendance data');
+    }
+  } catch (error) {
+    console.error('Error fetching attendance data:', error);
+  }
+}
+
+
 function updateAttendanceTable(faces) {
+  console.log('Updating table with data:', faces); // Check the received data
+
   const today = moment().tz('Asia/Phnom_Penh').startOf('day').toDate();
   const tomorrow = moment(today).add(1, 'day').toDate();
+  console.log('Today:', today, 'Tomorrow:', tomorrow);
 
-  // Group entries by class
   const groupedEntries = {};
   faces.forEach(face => {
     face.timeEntries.forEach(entry => {
-      const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh').toDate(); // Convert to local timezone
+      const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh').toDate();
       if (timeIn >= today && timeIn < tomorrow) {
         const classLabel = entry.classLabel;
         if (!groupedEntries[classLabel]) {
@@ -71,15 +96,16 @@ function updateAttendanceTable(faces) {
         }
         groupedEntries[classLabel].push({
           label: face.label,
-          timeIn: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A', // Format time in local timezone
-          timeOut: entry.timeOut ? moment(entry.timeOut).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A', // Format time out in local timezone
-          timeInDate: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('M/D/YYYY') : 'N/A' // Format date in local timezone
+          timeIn: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A',
+          timeOut: entry.timeOut ? moment(entry.timeOut).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A',
+          timeInDate: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('M/D/YYYY') : 'N/A'
         });
       }
     });
   });
 
-  // Generate HTML for each class
+  console.log('Grouped Entries:', groupedEntries); // Check the grouped entries
+
   let tableHTML = '';
   for (const [classLabel, entries] of Object.entries(groupedEntries)) {
     tableHTML += `
@@ -110,22 +136,22 @@ function updateAttendanceTable(faces) {
     `;
   }
 
-  console.log('Generated Table HTML:', tableHTML);
+  console.log('Generated Table HTML:', tableHTML); // Check the generated HTML
   attendanceContainer.innerHTML = tableHTML;
 }
 
+
 function updateClock() {
   const now = new Date();
-  const dateString = now.toLocaleDateString(); // Format the date
-  const timeString = now.toLocaleTimeString(); // Format the time
+  const dateString = now.toLocaleDateString();
+  const timeString = now.toLocaleTimeString();
 
   document.getElementById('date').textContent = dateString;
   document.getElementById('clock').textContent = timeString;
 }
 
-setInterval(updateClock, 1000); // Update both date and time every second
+setInterval(updateClock, 1000);
 
-// Function to auto-select the class based on the current time
 function autoSelectClass() {
   const now = new Date();
   const currentHour = now.getHours();
@@ -138,7 +164,7 @@ function autoSelectClass() {
   } else if (currentHour >= 17 && currentHour <= 21 || (currentHour === 21 && currentMinutes <= 59)) {
     selectedClass = 'English Class (Part-Time)';
   } else {
-    selectedClass = 'Khmer Class (Full-Time)'; // Default fallback
+    selectedClass = 'Khmer Class (Full-Time)';
   }
 
   document.querySelectorAll('.btn-class').forEach(button => {
@@ -151,44 +177,5 @@ function autoSelectClass() {
   console.log(`Auto-selected Class: ${selectedClass}`);
 }
 
-// Handle button clicks for action and class selection
-document.addEventListener('DOMContentLoaded', () => {
-  // Auto-select the class on page load
-  autoSelectClass();
-
-  document.querySelectorAll('.btn-group button').forEach(button => {
-    button.addEventListener('click', (event) => {
-      const action = event.target.getAttribute('data-action');
-      const classLabel = event.target.getAttribute('data-class');
-
-      if (action) {
-        selectedAction = action;
-        document.querySelectorAll('[data-action]').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        console.log(`Selected Action: ${selectedAction}`);
-      } else if (classLabel) {
-        selectedClass = classLabel;
-        document.querySelectorAll('[data-class]').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        console.log(`Selected Class: ${selectedClass}`);
-      }
-    });
-  });
-
-  // Fetch initial face data
-  fetch("/api/get-faces")
-    .then(response => response.json())
-    .then(data => updateAttendanceTable(data))
-    .catch(error => console.error('Error fetching face data:', error));
-
-  // Socket.io integration for real-time updates
-  const socket = io();
-
-  socket.on('face-updated', data => {
-    console.log('Real-time update received:', data);
-    fetch("/api/get-faces")
-      .then(response => response.json())
-      .then(data => updateAttendanceTable(data))
-      .catch(error => console.error('Error fetching face data:', error));
-  });
-});
+autoSelectClass();
+setInterval(autoSelectClass, 60000);

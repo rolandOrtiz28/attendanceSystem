@@ -10,7 +10,7 @@ const { Server } = require('socket.io');
 const io = new Server(server);
 const cron = require('node-cron');
 const ejsMate = require('ejs-mate');
-const dbUrl =process.env.DB_URL ||'mongodb://127.0.0.1:27017/wfsAttendanceSystem';
+const dbUrl = process.env.DB_URL ||'mongodb://127.0.0.1:27017/wfsAttendanceSystem';
 const PORT = process.env.PORT || 3000;
 const session = require('express-session');
 const MongoDBStore = require('connect-mongo');
@@ -18,6 +18,8 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const flash = require('connect-flash');
 const moment = require('moment-timezone');
+
+
 //
 // MongoDB connection
 mongoose.connect(dbUrl, {});

@@ -13,7 +13,10 @@ router.get('/loginface', (req, res) => {
 
 router.get('/api/get-faces', async (req, res) => {
     try {
-        const todayStart = moment().tz(TIMEZONE).startOf('day').toDate();
+        const clientMoment = moment().tz(TIMEZONE);
+
+        // Correct the start of the day
+        const todayStart = clientMoment.startOf('day').toDate();
         const tomorrowStart = moment(todayStart).add(1, 'day').toDate();
 
         const faces = await Face.find({
@@ -61,11 +64,14 @@ router.post('/api/detect-qr', async (req, res) => {
 
         const clientMoment = moment().tz(TIMEZONE);
 
+        // Debugging: Log the current moment
+        console.log(`Current Time for QR code: ${clientMoment.format()}`);
+
         if (action === 'timeIn') {
             const existingEntry = faceRecord.timeEntries.find(
                 entry => entry.classLabel === classLabel &&
                     !entry.timeOut &&
-                    moment(entry.timeIn).isSame(clientMoment, 'day')
+                    moment(entry.timeIn).tz(TIMEZONE).isSame(clientMoment, 'day')
             );
 
             if (existingEntry) {
@@ -81,7 +87,7 @@ router.post('/api/detect-qr', async (req, res) => {
             const lastEntry = faceRecord.timeEntries.find(
                 entry => entry.classLabel === classLabel &&
                     !entry.timeOut &&
-                    moment(entry.timeIn).isSame(clientMoment, 'day')
+                    moment(entry.timeIn).tz(TIMEZONE).isSame(clientMoment, 'day')
             );
 
             if (lastEntry) {
@@ -99,6 +105,7 @@ router.post('/api/detect-qr', async (req, res) => {
         res.status(500).send('Error saving QR data');
     }
 });
+
 
 router.get('/attendance', async (req, res) => {
     try {
