@@ -17,7 +17,7 @@ const MongoDBStore = require('connect-mongo');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const flash = require('connect-flash');
-
+const moment = require('moment-timezone');
 //
 // MongoDB connection
 mongoose.connect(dbUrl, {});
@@ -117,6 +117,13 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 app.use(bodyParser.json());
+
+
+
+app.get('/get-time', (req, res) => {
+    const currentTime = moment().tz('Asia/Phnom_Penh').format('YYYY-MM-DD HH:mm:ss');
+    res.json({ time: currentTime });
+});
 
 app.use('/', faceRoute);
 app.use('/teacher', teacherRoute);
