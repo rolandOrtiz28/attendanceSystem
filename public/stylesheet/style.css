@@ -209,3 +209,24 @@ font-size: 12px;
     transform: scaleX(-1);
     /* Mirror the camera feed horizontally */
 }
+
+
+.success-message {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 50%;
+
+    transform: translateX(-50%);
+    background-color: #4CAF50; /* Green background for success */
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+  }
+  
+  .fade-out {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+  }
+  

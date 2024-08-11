@@ -1,4 +1,4 @@
-<% layout('/layouts/boilerplate') -%>
+ <% layout('/layouts/boilerplate') -%>
   <link rel="stylesheet" href="/stylesheet/attendance.css">
 
   <div class="container">
@@ -17,12 +17,11 @@
       </form>
     </div>
 
-    <% ['Khmer Class (Full-Time)', 'English Class (Full-Time)' , 'English Class (Part-Time)' , 'Office Hour (Part-Time)'
-      ].forEach(classLabel=> { %>
+    <% ['Khmer Class (Full-Time)', 'English Class (Full-Time)' , 'English Class (Part-Time)' , 'Office Hour (Part-Time)']
+      .forEach(classLabel => { %>
       <div class="table-container">
         <h2 class="text-center">
-          <%= classLabel %> - <%= new Date(currentDate).toLocaleDateString([], { weekday: 'long' , year: 'numeric' ,
-              month: 'long' , day: 'numeric' }) %>
+          <%= classLabel %> - <%= new Date(currentDate).toLocaleDateString([], { weekday: 'long' , year: 'numeric' , month: 'long' , day: 'numeric' }) %>
         </h2>
         <table class="table align-middle mb-0 bg-white"
           id="<%= classLabel.replace(/\s+/g, '-').replace('(', '').replace(')', '') %>">
@@ -34,49 +33,47 @@
             </tr>
           </thead>
           <tbody>
-            <% if (recordsByClass[classLabel].length===0) { %>
+            <% if (recordsByClass[classLabel].length === 0) { %>
               <tr>
                 <td colspan="3" class="text-center">No records for <%= classLabel %> today</td>
               </tr>
-              <% } else { %>
-                <% recordsByClass[classLabel].forEach(record=> { %>
-                  <tr>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <div>
-                          <p class="fw-bold mb-1">
-                            <%= record.label %>
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <% if (record.timeIn) { %>
-                        <p class="fw-normal mb-1 time-in" data-time="<%= new Date(record.timeIn).toISOString() %>"></p>
-                        <% } else { %>
-                          <p class="fw-normal mb-1">N/A</p>
-                          <% } %>
-                    </td>
-                    <td>
-                      <% if (record.timeOut) { %>
-                        <p class="fw-normal mb-1 time-out" data-time="<%= new Date(record.timeOut).toISOString() %>">
+            <% } else { %>
+              <% recordsByClass[classLabel].forEach(record => { %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div>
+                        <p class="fw-bold mb-1">
+                          <%= record.label %>
                         </p>
-                        <% } else { %>
-                          <p class="fw-normal mb-1">N/A</p>
-                          <% } %>
-                    </td>
-                  </tr>
-                  <% }) %>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <% if (record.timeIn) { %>
+                      <p class="fw-normal mb-1 time-in" data-time="<%= new Date(record.timeIn).toISOString() %>"></p>
+                    <% } else { %>
+                      <p class="fw-normal mb-1">N/A</p>
                     <% } %>
+                  </td>
+                  <td>
+                    <% if (record.timeOut) { %>
+                      <p class="fw-normal mb-1 time-out" data-time="<%= new Date(record.timeOut).toISOString() %>"></p>
+                    <% } else { %>
+                      <p class="fw-normal mb-1">N/A</p>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
           </tbody>
         </table>
       </div>
-      <% }) %>
+    <% }) %>
 
-        <div class="d-flex justify-content-end mb-2">
-          <button id="download-excel" class="btn btn-success">Download Excel <i
-              class="fas fa-file-excel ms-1"></i></button>
-        </div>
+    <div class="d-flex justify-content-end mb-2">
+      <button id="download-excel" class="btn btn-success">Download Excel <i class="fas fa-file-excel ms-1"></i></button>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
@@ -112,8 +109,10 @@
       const timeElements = document.querySelectorAll('.time-in, .time-out');
       timeElements.forEach(el => {
         const timeString = el.getAttribute('data-time');
-        const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
-        el.textContent = localTime;
+        if (timeString) {
+          const localTime = moment(timeString).tz(moment.tz.guess()).format('hh:mm A');
+          el.textContent = localTime;
+        }
       });
     });
   </script>

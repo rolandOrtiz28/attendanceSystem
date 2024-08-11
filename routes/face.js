@@ -200,6 +200,7 @@ router.get('/attendance', async (req, res) => {
         const today = moment().tz(TIMEZONE).startOf('day').toDate();
         const tomorrow = moment(today).add(1, 'day').toDate();
 
+        // Fetch faces with timeIn within today
         const faces = await Face.find({
             'timeEntries.timeIn': { $gte: today, $lt: tomorrow }
         });
@@ -232,6 +233,7 @@ router.get('/attendance', async (req, res) => {
         res.status(500).send('Error retrieving face data');
     }
 });
+
 
 router.get('/attendance/monthly', async (req, res) => {
     try {

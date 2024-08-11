@@ -4,6 +4,7 @@ let detectedQR = null;
 let selectedAction = 'timeIn'; // Default value
 let selectedClass = 'Khmer Class (Full-Time)'; // Default value
 
+// Initialize QR code reader
 qrReader.start(
   { facingMode: "environment" }, // Use rear camera
   {
@@ -20,6 +21,7 @@ qrReader.start(
   }
 );
 
+// Adjust QR reader element
 document.addEventListener('DOMContentLoaded', () => {
   const qrReaderElement = document.getElementById("qr-reader");
   if (qrReaderElement) {
@@ -27,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Prevent rapid re-scanning
 let lastScannedQR = null;
 let lastScannedTime = 0;
 const COOLDOWN_PERIOD = 3000; // 3 seconds cooldown
@@ -37,6 +40,7 @@ function processQRDetection() {
   if (detectedQR && (lastScannedQR !== detectedQR || (currentTime - lastScannedTime) > COOLDOWN_PERIOD)) {
     lastScannedQR = detectedQR;
     lastScannedTime = currentTime;
+    console.log(`Processing QR code: ${detectedQR} with action: ${selectedAction} and class: ${selectedClass}`);
     saveQRDetection(detectedQR, selectedAction, selectedClass);
   } else {
     console.log('QR code already scanned recently, skipping.');
@@ -54,13 +58,31 @@ async function saveQRDetection(qrCode, action, classLabel) {
     const responseText = await response.text(); // Read as text
     console.log('Server response:', responseText);
 
-    // Since response is plain text, just log and skip JSON parsing
+    // Display success message
+    showSuccessMessage(`${qrCode} has successfully ${action}ed`);
+    
+    // Fetch updated attendance data
     fetchAttendanceData();
   } catch (error) {
     console.error(`Error sending QR detection data to server: ${error}`);
   }
 }
 
+function showSuccessMessage(message) {
+  const successMessageElement = document.getElementById('success-message');
+  successMessageElement.textContent = message;
+  successMessageElement.style.display = 'block';
+
+  // Remove the fade-out class after 2 seconds
+  setTimeout(() => {
+    successMessageElement.classList.add('fade-out');
+    // Hide the element after fading out
+    setTimeout(() => {
+      successMessageElement.style.display = 'none';
+      successMessageElement.classList.remove('fade-out');
+    }, 1000); // Duration of the fade-out effect
+  }, 2000); // Duration to display the message
+}
 
 async function fetchAttendanceData() {
   try {
@@ -68,7 +90,7 @@ async function fetchAttendanceData() {
     if (response.ok) {
       const faces = await response.json();
       console.log('Fetched faces:', faces);
-      updateAttendanceTable(faces);
+      // No table update needed; we are showing success messages instead
     } else {
       console.error('Failed to fetch attendance data');
     }
@@ -76,70 +98,6 @@ async function fetchAttendanceData() {
     console.error('Error fetching attendance data:', error);
   }
 }
-
-
-function updateAttendanceTable(faces) {
-  console.log('Updating table with data:', faces); // Check the received data
-
-  const today = moment().tz('Asia/Phnom_Penh').startOf('day').toDate();
-  const tomorrow = moment(today).add(1, 'day').toDate();
-  console.log('Today:', today, 'Tomorrow:', tomorrow);
-
-  const groupedEntries = {};
-  faces.forEach(face => {
-    face.timeEntries.forEach(entry => {
-      const timeIn = moment(entry.timeIn).tz('Asia/Phnom_Penh').toDate();
-      if (timeIn >= today && timeIn < tomorrow) {
-        const classLabel = entry.classLabel;
-        if (!groupedEntries[classLabel]) {
-          groupedEntries[classLabel] = [];
-        }
-        groupedEntries[classLabel].push({
-          label: face.label,
-          timeIn: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A',
-          timeOut: entry.timeOut ? moment(entry.timeOut).tz('Asia/Phnom_Penh').format('hh:mm:ss A') : 'N/A',
-          timeInDate: entry.timeIn ? moment(entry.timeIn).tz('Asia/Phnom_Penh').format('M/D/YYYY') : 'N/A'
-        });
-      }
-    });
-  });
-
-  console.log('Grouped Entries:', groupedEntries); // Check the grouped entries
-
-  let tableHTML = '';
-  for (const [classLabel, entries] of Object.entries(groupedEntries)) {
-    tableHTML += `
-      <h3 class="text-center mt-2">${classLabel}</h3>
-      <table class="table align-middle mb-0 table-dark table-striped">
-        <thead class="bg-light">
-          <tr>
-            <th>Name</th>
-            <th>Class</th>
-            <th>Time In</th>
-            <th>Time Out</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${entries.map(entry => `
-            <tr>
-              <td>${entry.label}</td>
-              <td>${classLabel}</td>
-              <td>${entry.timeIn}</td>
-              <td>${entry.timeOut}</td>
-              <td>${entry.timeInDate}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <br />
-    `;
-  }
-
-  console.log('Generated Table HTML:', tableHTML); // Check the generated HTML
-  attendanceContainer.innerHTML = tableHTML;
-}
-
 
 function updateClock() {
   const now = new Date();
@@ -179,3 +137,11 @@ function autoSelectClass() {
 
 autoSelectClass();
 setInterval(autoSelectClass, 60000);
+
+// Event listeners for button clicks
+document.querySelectorAll('.btn[data-action]').forEach(button => {
+  button.addEventListener('click', (event) => {
+    selectedAction = event.target.getAttribute('data-action');
+    console.log(`Selected action: ${selectedAction}`);
+  });
+});
