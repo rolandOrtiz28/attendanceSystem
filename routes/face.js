@@ -197,12 +197,16 @@ router.post('/api/detect-qr', async (req, res) => {
 
 router.get('/attendance', async (req, res) => {
     try {
-        const today = moment().tz(TIMEZONE).startOf('day').toDate();
-        const tomorrow = moment(today).add(1, 'day').toDate();
+        const now = moment().tz(TIMEZONE);
+        const today = now.startOf('day').toDate();
+        const tomorrow = now.add(1, 'day').startOf('day').toDate();
 
-        // Fetch faces with timeIn within today
+        // Adjust today and tomorrow for time between 12 AM and 6 AM
+        const adjustedToday = now.clone().startOf('day').toDate();
+        const adjustedTomorrow = now.clone().add(1, 'day').startOf('day').toDate();
+        
         const faces = await Face.find({
-            'timeEntries.timeIn': { $gte: today, $lt: tomorrow }
+            'timeEntries.timeIn': { $gte: adjustedToday, $lt: adjustedTomorrow }
         });
 
         const recordsByClass = {
@@ -215,19 +219,29 @@ router.get('/attendance', async (req, res) => {
         faces.forEach(face => {
             face.timeEntries.forEach(entry => {
                 const timeIn = moment(entry.timeIn).tz(TIMEZONE).toDate();
+                const timeOut = moment(entry.timeOut).tz(TIMEZONE).toDate();
+
+                // Adjust timeIn and timeOut if they fall between 12 AM and 6 AM
                 if (timeIn >= today && timeIn < tomorrow) {
+                    if (moment(timeIn).hour() >= 0 && moment(timeIn).hour() < 6) {
+                        timeIn = moment(timeIn).add(1, 'day').toDate();
+                    }
+                    if (moment(timeOut).hour() >= 0 && moment(timeOut).hour() < 6) {
+                        timeOut = moment(timeOut).add(1, 'day').toDate();
+                    }
+
                     if (entry.classLabel) {
                         recordsByClass[entry.classLabel].push({
                             label: face.label,
-                            timeIn: entry.timeIn,
-                            timeOut: entry.timeOut
+                            timeIn,
+                            timeOut
                         });
                     }
                 }
             });
         });
 
-        res.render('./attendance/index', { recordsByClass, currentDate: today });
+        res.render('./attendance/index', { recordsByClass, currentDate: now.toDate() });
     } catch (error) {
         console.error('Error retrieving face data:', error);
         res.status(500).send('Error retrieving face data');
