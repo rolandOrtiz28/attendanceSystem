@@ -11,6 +11,32 @@ router.get('/loginface', (req, res) => {
     res.render('home/loginface');
 });
 
+// router.get('/api/get-faces', async (req, res) => {
+//     try {
+//         const clientMoment = moment().tz(TIMEZONE);
+
+//         // Correct the start of the day
+//         const todayStart = clientMoment.startOf('day').toDate();
+//         const tomorrowStart = moment(todayStart).add(1, 'day').toDate();
+
+//         const faces = await Face.find({
+//             'timeEntries.timeIn': { $gte: todayStart, $lt: tomorrowStart }
+//         });
+
+//         const filteredFaces = faces.map(face => ({
+//             label: face.label,
+//             timeEntries: face.timeEntries.filter(entry => {
+//                 const timeIn = moment(entry.timeIn).tz(TIMEZONE);
+//                 return timeIn.isSame(todayStart, 'day');
+//             })
+//         }));
+
+//         res.json(filteredFaces);
+//     } catch (error) {
+//         console.error('Error fetching face data:', error);
+//         res.status(500).send('Error fetching face data');
+//     }
+// });
 router.get('/api/get-faces', async (req, res) => {
     try {
         const clientMoment = moment().tz(TIMEZONE);
@@ -27,6 +53,10 @@ router.get('/api/get-faces', async (req, res) => {
             label: face.label,
             timeEntries: face.timeEntries.filter(entry => {
                 const timeIn = moment(entry.timeIn).tz(TIMEZONE);
+                // Adjust timeIn if between 12 AM and 6 AM
+                if (timeIn.hour() < 6) {
+                    timeIn.add(1, 'day');
+                }
                 return timeIn.isSame(todayStart, 'day');
             })
         }));
@@ -48,6 +78,63 @@ router.post('/delete', async (req, res) => {
     }
 });
 
+// router.post('/api/detect-qr', async (req, res) => {
+//     try {
+//         const { qrCode, action, classLabel } = req.body;
+
+//         if (!['timeIn', 'timeOut'].includes(action)) {
+//             return res.status(400).send('Invalid action');
+//         }
+
+//         let faceRecord = await Face.findOne({ label: qrCode });
+
+//         if (!faceRecord) {
+//             faceRecord = new Face({ label: qrCode, timeEntries: [] });
+//         }
+
+//         const clientMoment = moment().tz(TIMEZONE);
+
+//         // Debugging: Log the current moment
+//         console.log(`Current Time for QR code: ${clientMoment.format()}`);
+
+//         if (action === 'timeIn') {
+//             const existingEntry = faceRecord.timeEntries.find(
+//                 entry => entry.classLabel === classLabel &&
+//                     !entry.timeOut &&
+//                     moment(entry.timeIn).tz(TIMEZONE).isSame(clientMoment, 'day')
+//             );
+
+//             if (existingEntry) {
+//                 return res.status(400).send('Already timed in for this class today');
+//             }
+
+//             faceRecord.timeEntries.push({
+//                 timeIn: clientMoment.toDate(),
+//                 classLabel
+//             });
+
+//         } else if (action === 'timeOut') {
+//             const lastEntry = faceRecord.timeEntries.find(
+//                 entry => entry.classLabel === classLabel &&
+//                     !entry.timeOut &&
+//                     moment(entry.timeIn).tz(TIMEZONE).isSame(clientMoment, 'day')
+//             );
+
+//             if (lastEntry) {
+//                 lastEntry.timeOut = clientMoment.toDate();
+//             } else {
+//                 return res.status(400).send('No matching time-in entry found for time-out');
+//             }
+//         }
+
+//         await faceRecord.save();
+//         req.app.get('io').emit('face-updated', { label: qrCode, action, time: clientMoment.toDate(), classLabel });
+//         res.status(201).send(`QR ${action} recorded successfully for ${classLabel}`);
+//     } catch (error) {
+//         console.error('Error saving QR data:', error);
+//         res.status(500).send('Error saving QR data');
+//     }
+// });
 router.post('/api/detect-qr', async (req, res) => {
     try {
         const { qrCode, action, classLabel } = req.body;
@@ -64,8 +151,10 @@ router.post('/api/detect-qr', async (req, res) => {
 
         const clientMoment = moment().tz(TIMEZONE);
 
-        // Debugging: Log the current moment
-        console.log(`Current Time for QR code: ${clientMoment.format()}`);
+        // Adjust the time if between 12 AM and 6 AM
+        if (clientMoment.hour() < 6) {
+            clientMoment.add(1, 'day');
+        }
 
         if (action === 'timeIn') {
             const existingEntry = faceRecord.timeEntries.find(
@@ -105,7 +194,6 @@ router.post('/api/detect-qr', async (req, res) => {
         res.status(500).send('Error saving QR data');
     }
 });
-
 
 router.get('/attendance', async (req, res) => {
     try {
