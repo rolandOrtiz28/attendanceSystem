@@ -151,8 +151,8 @@ router.post('/api/detect-qr', async (req, res) => {
 
         const clientMoment = moment().tz(TIMEZONE);
 
-        // Adjust the time if between 12 AM and 6 AM
-        if (clientMoment.hour() < 6) {
+        // Adjust the time if between 12 AM and 6:59 AM
+        if (clientMoment.hour() < 7) {
             clientMoment.add(1, 'day');
         }
 
@@ -204,7 +204,7 @@ router.get('/attendance', async (req, res) => {
         // Adjust today and tomorrow for time between 12 AM and 6 AM
         const adjustedToday = now.clone().startOf('day').toDate();
         const adjustedTomorrow = now.clone().add(1, 'day').startOf('day').toDate();
-        
+
         const faces = await Face.find({
             'timeEntries.timeIn': { $gte: adjustedToday, $lt: adjustedTomorrow }
         });
