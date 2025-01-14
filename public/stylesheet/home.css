@@ -1,104 +1,90 @@
+/* General Reset */
 body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+/* Container */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
+    max-width: 1200px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Left Column */
+.col-left {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.col-left img {
+    max-width: 90%;
     height: auto;
-    background-image: url("/images/FaceRecognition.png");
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-}
-
-
-#particles-js{
-width: 100%;
-position: absolute;
-overflow: hidden;
-top: 0;
-left: 0;
-}
-
-.container{
-height: 90vh;
-}
-
-
-img{
-width: 60%;
-filter: grayscale(1);
-transition: all .5s ease;
-cursor: pointer;
-}
-
-img:hover{
-filter: grayscale(0);
-transform: scale(1.5);
-
-}
-
-
-.icons .row .col {
-    margin: 0 10px;
     border-radius: 10px;
-    /* From https://css.glass */
-    background: rgba(255, 255, 255, 0.35);
-    border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(4.3px);
-    -webkit-backdrop-filter: blur(4.3px);
-    border: 1px solid rgba(255, 255, 255, 0.31);
-    box-shadow: 10px 5px 5px rgb(57, 57, 57);
-    position: relative;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.icons .row .col:hover h5 {
-    display: block;
-
+/* Right Column */
+.col-right {
+    flex: 1;
+    padding: 20px;
+    text-align: left;
 }
 
-.icons .row .col h5 {
-    display: none;
-color: #ffffff;
-    position: absolute;
-justify-content: center;
-align-items: center;
-width: 100%;
-text-align: center;
-    top: -60px;
-    /* Adjusted top position to move the h3 above the image */
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 5px 10px;
-    border-radius: 5px;
-    z-index: 1;
-    /* Ensure the h3 is displayed on top */
+.title {
+    font-size: 36px;
+    color: #333333;
+    margin-bottom: 10px;
 }
 
-.icons .row .col:hover{
-box-shadow: 10px 5px 5px #fac506;
+.subtitle {
+    font-size: 24px;
+    color: #666666;
+    margin-bottom: 15px;
 }
 
+.description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #777777;
+    margin-bottom: 20px;
+}
 
-.row .col-md-9 .title{
-text-transform: uppercase;
-    background-image: linear-gradient(-225deg,
-            #231557 0%,
-            #44107a 29%,
-            #ff1361 67%,
-            #fff800 100%);
-    background-size: auto auto;
-    background-clip: border-box;
-    background-size: 200% auto;
-    color: #fff;
-    background-clip: text;
-    text-fill-color: transparent;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: textclip 2s linear infinite;
+/* Buttons */
+.button-group {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
     display: inline-block;
-    font-size: 120px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: #ffffff;
+    text-decoration: none;
+    text-align: center;
+    background-color: #ff0067;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes textclip {
-    to {
-        background-position: 200% center;
-    }
+.btn:hover {
+    background-color: #d60056;
 }

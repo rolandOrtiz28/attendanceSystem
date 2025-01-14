@@ -99,14 +99,29 @@ async function fetchAttendanceData() {
 
 function updateClock() {
   const now = new Date();
-  const dateString = now.toLocaleDateString();
-  const timeString = now.toLocaleTimeString();
+  
+  // Format the date: "Monday, January 14, 2025"
+  const dateString = now.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+  });
+
+  // Format the time: "12:43:16 PM"
+  const timeString = now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true // Ensures AM/PM format
+  });
 
   document.getElementById('date').textContent = dateString;
   document.getElementById('clock').textContent = timeString;
 }
 
 setInterval(updateClock, 1000);
+
 
 function autoSelectClass() {
   const now = new Date();

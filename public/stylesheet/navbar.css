@@ -1,0 +1,115 @@
+
+.custom-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+}
+
+.nav-link {
+    transition: color 0.3s ease-in-out;
+    font-size: 15px;
+}
+
+.nav-link:hover {
+    color: #aaa !important;
+   
+}
+
+.dropdown-menu {
+    display: none; /* Hide by default */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 600px;
+    background-color: #222;
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    padding: 20px;
+    border-radius: 20px !important;
+    z-index: 4;
+    opacity: 0; /* Start with opacity 0 for smooth transitions */
+    transition: opacity 0.9s ease-in !important; /* Add transition for a smooth fade-in */
+    z-index: 1051 !important; 
+}
+
+
+.dropdown-menu.show {
+    display: block; /* Bootstrap will toggle this class */
+    opacity: 1; /* Show with full opacity */
+}
+/* Grid layout for dropdown items */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    grid-gap: 20px; /* Space between items */
+}
+
+/* Additional styles for dropdown items */
+.dropdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-decoration: none;
+    color: #fff;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+}
+
+.dropdown-item i{
+    color: white;
+}
+.dropdown-item span{
+    color: white;
+}
+.dropdown-item:hover i{
+    color: #101010;
+}
+.dropdown-item:hover span{
+    color: #101010;
+}
+
+
+@media (max-width: 768px) {
+  .custom-navbar{
+    width:100%;
+    
+  }
+  .dropdown-menu{
+    width: 300px;
+  }
+  .grid-container{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .dropdown-item i{
+    font-size: 13px;
+  }
+
+  .dropdown-item span{
+    font-size: 13px;
+  }
+  .dropdown-item p{
+    font-size: 10px;
+  }
+
+  }
+  
+
+ 
