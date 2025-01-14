@@ -64,7 +64,7 @@ router.get('/api/get-faces', async (req, res) => {
         res.json(filteredFaces);
     } catch (error) {
         console.error('Error fetching face data:', error);
-        res.status(500).send('Error fetching face data');
+        res.status(500).send('Error fetching face datas');
     }
 });
 
